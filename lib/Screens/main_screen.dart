@@ -113,34 +113,41 @@ class _MainScreenState extends State<MainScreen> {
           ? SafeArea(
               child: Column(
                 children: [
-                  SizedBox(
-                    width: MediaQuery.of(context)
-                        .size
-                        .width, // or use fixed size like 200
-                    height: MediaQuery.of(context).size.height - 116,
-                    //TODO: Add map zoom feature
-                    child: GoogleMap(
-                      minMaxZoomPreference: MinMaxZoomPreference(14, 17),
-                      zoomGesturesEnabled: true,
-                      initialCameraPosition:
-                          CameraPosition(target: _initialcameraposition),
-                      mapType: MapType.normal,
-                      onMapCreated: _onMapCreated,
-                      myLocationEnabled: true,
+                  Flexible(
+                    child: SizedBox(
+                      width: MediaQuery.of(context)
+                          .size
+                          .width, // or use fixed size like 200
+                      height: MediaQuery.of(context).size.height,
+                      //TODO: Add map zoom feature
+                      child: GoogleMap(
+                        minMaxZoomPreference: MinMaxZoomPreference(14, 17),
+                        zoomGesturesEnabled: true,
+                        initialCameraPosition:
+                            CameraPosition(target: _initialcameraposition),
+                        mapType: MapType.normal,
+                        onMapCreated: _onMapCreated,
+                        myLocationEnabled: true,
+                      ),
                     ),
                   ),
                   Container(
+                    height: 45,
                     color: kMainColour,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                       MenuItem(icon: Icons.home, label: 'Home'),
-                        MenuItem(icon: Icons.directions_car, label: 'Moving'),
-                        MenuItem(icon: Icons.people, label: ' Create Group'),
-                        MenuItem(icon: Icons.location_on_rounded, label: 'Active Group'),
-                        MenuItem(icon: Icons.settings, label: 'Settings'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                         MenuItem(icon: Icons.home, label: 'Home'),
+                          MenuItem(icon: Icons.directions_car, label: 'Moving'),
+                          MenuItem(icon: Icons.people, label: ' Create Group'),
+                          MenuItem(icon: Icons.location_on_rounded, label: 'Active Group'),
+                          MenuItem(icon: Icons.settings, label: 'Settings'),
 
-                      ],
+                        ],
+                      ),
                     ),
                   )
                 ],
