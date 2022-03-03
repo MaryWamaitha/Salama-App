@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "385117864282",
+    "firebase_url": "https://salama-ba39f-default-rtdb.firebaseio.com",
+    "project_id": "salama-ba39f",
+    "storage_bucket": "salama-ba39f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:385117864282:android:5c64107cb953ee2113f363",
+        "android_client_info": {
+          "package_name": "co.wamaitha.salama"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "385117864282-u1a8jk70mokdddsr8tlfe6vo9trustan.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYZQZsfYvpegu4xOdRtLfU526VpbkJUxY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "385117864282-u1a8jk70mokdddsr8tlfe6vo9trustan.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
