@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:salama/Screens/create_group_screen.dart';
 import 'Screens/welcome_screen.dart';
 import 'Screens/registration_screen.dart';
 import 'Screens/main_screen.dart';
@@ -27,6 +28,7 @@ class Salama extends StatelessWidget {
         LoginScreen.id: (context) => LoginScreen(),
         RegistrationScreen.id: (context) => RegistrationScreen(),
         MainScreen.id: (context) => MainScreen(),
+        CreateGroup.id: (context) => CreateGroup(),
       },
       home: WelcomeScreen(),
     );

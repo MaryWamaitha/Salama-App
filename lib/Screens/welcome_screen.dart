@@ -74,7 +74,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: MaterialButton(
                   onPressed: () {
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (context)=> RegistrationScreen()));//Go to login screen.
+                        MaterialPageRoute(builder: (context)=> RegistrationScreen()));//Go to Registration screen.
                   },
                   minWidth: 200.0,
                   height: 42.0,

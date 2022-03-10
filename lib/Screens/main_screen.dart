@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import '../Components/icons.dart';
+import 'create_group_screen.dart';
 
 final _firestore = FirebaseFirestore.instance;
 User loggedInUser;
@@ -132,7 +133,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                   Container(
-                    height: 45,
+                    height: 66,
                     color: kMainColour,
                     child: Padding(
                       padding: const EdgeInsets.all(3.0),
@@ -140,12 +141,21 @@ class _MainScreenState extends State<MainScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                         MenuItem(icon: Icons.home, label: 'Home'),
+                          MenuItem(
+                            icon: Icons.home,
+                            label: 'Home',
+                          ),
+                          MenuItem(
+                            icon: Icons.people,
+                            label: 'Create Group',
+                            page: CreateGroup.id,
+                            //Go to Group screen,
+                          ),
+                          MenuItem(
+                              icon: Icons.location_on_rounded,
+                              label: 'Active Group'),
                           MenuItem(icon: Icons.directions_car, label: 'Moving'),
-                          MenuItem(icon: Icons.people, label: ' Create Group'),
-                          MenuItem(icon: Icons.location_on_rounded, label: 'Active Group'),
                           MenuItem(icon: Icons.settings, label: 'Settings'),
-
                         ],
                       ),
                     ),
@@ -157,4 +167,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-
