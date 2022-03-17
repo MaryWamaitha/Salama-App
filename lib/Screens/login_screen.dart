@@ -125,8 +125,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.pushNamed(context, MainScreen.id);
                         }
 
-                      } catch (e) {
-                        print(e);
+                      } on FirebaseAuthException catch (e) {
+                        setState(() {
+                          showSpinner = false;
+                        });
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(' Ops! Registration Failed'),
+                            content: Text('${e.message}'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                },
+                                child: Text('Okay'),
+                              )
+                            ],
+                          ),
+                        );
                       }
                     },
                     minWidth: 200.0,

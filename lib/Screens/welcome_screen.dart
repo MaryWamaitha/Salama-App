@@ -3,6 +3,7 @@ import 'login_screen.dart';
 import 'registration_screen.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
+
 class WelcomeScreen extends StatefulWidget {
   //using the key word static now associates the ID with the class and hence when calling
   //the welcome screen object dont have to create the whole screen

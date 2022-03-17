@@ -2,10 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_places_for_flutter/google_places_for_flutter.dart';
+
 import 'dart:async';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
+import 'dart:math';
+
+import 'package:google_api_headers/google_api_headers.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:google_maps_webservice/places.dart';
+
+const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
+
 
 
 class CreateGroup extends StatefulWidget {
@@ -19,6 +26,8 @@ class _CreateGroupState extends State<CreateGroup> {
   String member ;
   String email;
   String user ;
+  String place;
+  String name;
   List<String> Users = [];
   List<String> Members = [];
   final _controller = TextEditingController();
@@ -32,10 +41,56 @@ class _CreateGroupState extends State<CreateGroup> {
       return Users;
     });
   }
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+
+  // void onError(PlacesAutocompleteResponse response) {
+  //   homeScaffoldKey.currentState.showSnackBar(
+  //     SnackBar(content: Text(response.errorMessage)),
+  //   );
+  // }
+
+  Future<void> _handlePressButton() async {
+    // show input autocomplete with selected mode
+    // then get the Prediction selected
+    Prediction p = await PlacesAutocomplete.show(
+      context: context,
+      apiKey: kGoogleApiKey,
+      radius: 10000000,
+      types: [],
+      strictbounds: false,
+      // onError: onError,
+      mode: Mode.overlay,
+      language: "en",
+      decoration: InputDecoration(
+        hintText: 'Search',
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(
+            color: Colors.white,
+          ),
+        ),
+      ),
+      components: [Component(Component.country, "gh")],
+    );
+
+    displayPrediction(p);
+  }
+
+  Future<Null> displayPrediction(Prediction p) async {
+    if (p != null) {
+      // get detail (lat/lng)
+      GoogleMapsPlaces _places = GoogleMapsPlaces(
+        apiKey: kGoogleApiKey,
+        apiHeaders: await GoogleApiHeaders().getHeaders(),
+      );
+      PlacesDetailsResponse detail = await _places.getDetailsByPlaceId(p.placeId);
+      final lat = detail.result.geometry.location.lat;
+      final lng = detail.result.geometry.location.lng;
+      final name = detail.result.name;
+      setState(() {
+        place = name;
+      });
+
+    }
   }
 
   @override
@@ -113,6 +168,7 @@ class _CreateGroupState extends State<CreateGroup> {
                               .contains(value.text.toLowerCase()));
                         },
                         onSelected: (value) async {
+                          //TODO: Send request for user to join group
                           final QuerySnapshot activity = await _firestore
                               .collection('users')
                               .where('username', isEqualTo: value)
@@ -214,7 +270,8 @@ class _CreateGroupState extends State<CreateGroup> {
                         child: TextField(
                           controller: _controller,
                           onTap: () async {
-                            // placeholder for our places search later
+                             _handlePressButton();
+                           print('name of $place');
                           },
                           obscureText: true,
                           decoration: InputDecoration(
@@ -228,6 +285,7 @@ class _CreateGroupState extends State<CreateGroup> {
                         ),
                       ),
                     ),
+                    Text('name of $place'),
                   ],
                 ),
               ),
