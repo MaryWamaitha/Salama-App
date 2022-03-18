@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,8 +13,7 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
-
-
+enum Option { systemset }
 
 class CreateGroup extends StatefulWidget {
   static String id = 'create_group_screen';
@@ -23,13 +23,20 @@ class CreateGroup extends StatefulWidget {
 
 class _CreateGroupState extends State<CreateGroup> {
   final _firestore = FirebaseFirestore.instance;
-  String member ;
+  String member;
   String email;
-  String user ;
+  String user;
   String place;
   String name;
+  LatLng destination;
+  double latitude;
+  double long;
   List<String> Users = [];
   List<String> Members = [];
+  List<double> Distance = [1, 1.5, 2, 3, 4, 5];
+  double distance = 1.5;
+  String DistanceInfo = 'Select distance below';
+  Option systemdistance = Option.systemset;
   final _controller = TextEditingController();
   Future<void> getUsers() async {
     // Get docs from collection reference
@@ -41,12 +48,6 @@ class _CreateGroupState extends State<CreateGroup> {
       return Users;
     });
   }
-
-  // void onError(PlacesAutocompleteResponse response) {
-  //   homeScaffoldKey.currentState.showSnackBar(
-  //     SnackBar(content: Text(response.errorMessage)),
-  //   );
-  // }
 
   Future<void> _handlePressButton() async {
     // show input autocomplete with selected mode
@@ -75,6 +76,33 @@ class _CreateGroupState extends State<CreateGroup> {
     displayPrediction(p);
   }
 
+  //Drop Down
+  DropdownButton<double> androidDropdown() {
+    List<DropdownMenuItem<double>> dropdownItems = [];
+    for (double dist in Distance) {
+      var newItem = DropdownMenuItem(
+        child: Text(
+          '$dist',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        value: dist,
+      );
+      dropdownItems.add(newItem);
+    }
+
+    return DropdownButton<double>(
+      value: distance,
+      items: dropdownItems,
+      onChanged: (value) {
+        setState(() {
+          distance = value;
+        });
+      },
+    );
+  }
+
   Future<Null> displayPrediction(Prediction p) async {
     if (p != null) {
       // get detail (lat/lng)
@@ -82,14 +110,17 @@ class _CreateGroupState extends State<CreateGroup> {
         apiKey: kGoogleApiKey,
         apiHeaders: await GoogleApiHeaders().getHeaders(),
       );
-      PlacesDetailsResponse detail = await _places.getDetailsByPlaceId(p.placeId);
+      PlacesDetailsResponse detail =
+          await _places.getDetailsByPlaceId(p.placeId);
       final lat = detail.result.geometry.location.lat;
       final lng = detail.result.geometry.location.lng;
       final name = detail.result.name;
       setState(() {
         place = name;
+        destination = LatLng(lat, lng);
+        latitude = destination.latitude;
+        long = destination.longitude;
       });
-
     }
   }
 
@@ -141,152 +172,288 @@ class _CreateGroupState extends State<CreateGroup> {
                       topLeft: const Radius.circular(30.0),
                       topRight: const Radius.circular(30.0),
                     )),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12, left: 12),
-                      child: Text(
-                        'Search for Users ',
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Center(
-                      child: Autocomplete<String>(
-                        optionsBuilder: (TextEditingValue value) {
-                          // When the field is empty
-                          if (value.text.isEmpty) {
-                            return [];
-                          }
-                          // The logic to find out which ones should appear
-                          return Users.where((suggestion) => suggestion
-                              .toLowerCase()
-                              .contains(value.text.toLowerCase()));
-                        },
-                        onSelected: (value) async {
-                          //TODO: Send request for user to join group
-                          final QuerySnapshot activity = await _firestore
-                              .collection('users')
-                              .where('username', isEqualTo: value)
-                              .get();
-                          final List<DocumentSnapshot> available =
-                              activity.docs;
-                          var result = available[0].data() as Map;
-                          var status = result['status'];
-                          if (status == 'active') {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title:
-                                    Text(' User cannot be added to group'),
-                                content: Text(
-                                    'The user is currently active in another group'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(ctx).pop();
-                                    },
-                                    child: Text('Okay'),
-                                  )
-                                ],
-                              ),
-                            );
-                          } else {
-                            setState(() {
-                              // print(available);
-                              Members.add(value);
-                              Users.remove(value);
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 20.0),
-                    Center(
-                      child: Text(
-                        'Group Members ',
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    SizedBox(height: 10.0),
-                    for (var user in Members)
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Card(
-                          margin: EdgeInsets.only(right: 15, left: 5),
-                          color: Colors.white30,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 5.0, right: 4.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  user,
-                                  style: TextStyle(
-                                    fontSize: 14.0,
-                                    color: Colors.white,
+                        padding: const EdgeInsets.only(top: 12, left: 12),
+                        child: Text(
+                          'Search for Users by typing their user names below',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                      Center(
+                        child: Container(
+                          color: Colors.white54,
+                          child: Autocomplete<String>(
+
+                            optionsBuilder: (TextEditingValue value) {
+                              // When the field is empty
+                              if (value.text.isEmpty) {
+                                return [];
+                              }
+                              // The logic to find out which ones should appear
+                              return Users.where((suggestion) => suggestion
+                                  .toLowerCase()
+                                  .contains(value.text.toLowerCase()));
+                            },
+                            onSelected: (value) async {
+                              //TODO: Send request for user to join group
+                              final QuerySnapshot activity = await _firestore
+                                  .collection('users')
+                                  .where('username', isEqualTo: value)
+                                  .get();
+                              final List<DocumentSnapshot> available =
+                                  activity.docs;
+                              var result = available[0].data() as Map;
+                              var status = result['status'];
+                              if (status == 'active') {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title:
+                                        Text(' User cannot be added to group'),
+                                    content: Text(
+                                        'The user is currently active in another group'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                        },
+                                        child: Text('Okay'),
+                                      )
+                                    ],
                                   ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      Members.remove(user);
-                                      Users.add(user);
-                                    });
-                                  },
-                                  icon: Icon(Icons.cancel),
-                                ),
-                              ],
-                            ),
+                                );
+                              } else {
+                                setState(() {
+                                  // print(available);
+                                  Members.add(value);
+                                  Users.remove(value);
+                                });
+                              }
+                            },
                           ),
                         ),
                       ),
-                    SizedBox(height: 15.0),
-                    Text('Where are you guys going to ?',
+                      SizedBox(height: 20.0),
+                      Center(
+                        child: Text(
+                          'Group Members ',
+                          style: kMajorHeadings,
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                      SizedBox(height: 10.0),
+                      for (var user in Members)
+                        Members != null
+                            ? Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0),
+                                child: Card(
+                                  margin: EdgeInsets.only(right: 15, left: 5),
+                                  color: Colors.white30,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 5.0, right: 4.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          user,
+                                          style: TextStyle(
+                                            fontSize: 14.0,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              Members.remove(user);
+                                              Users.add(user);
+                                            });
+                                          },
+                                          icon: Icon(Icons.cancel),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              )
+                            // SizedBox(height: 15.0),
+                            : Text(' There are no members in the group'),
+                      divider,
+                      Text(
+                        'Where are you guys going to ?',
                         style: TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w700,
-                        )),
-                    Text(
-                      'Tracking will begin once you are close to or arrive here',
-                      style: TextStyle(
-                        fontSize: 13.0,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 10.0),
-                    Padding(
-                      padding: EdgeInsets.only(right: 10, top: 10, bottom: 10),
-
-                      child: Container(
-                        height: 45.0,
-                        child: TextField(
-                          controller: _controller,
-                          onTap: () async {
-                             _handlePressButton();
-                           print('name of $place');
-                          },
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            fillColor: Colors.white,
-                            filled: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.0),
+                      Text(
+                        'Tracking will begin once you are close to or arrive here',
+                        style: TextStyle(
+                          fontSize: 13.0,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(right: 10, bottom: 10),
+                        child: Container(
+                          height: 45.0,
+                          child: TextButton(
+                            child: Container(
+                              height: 40.0,
+                              width: 250.0,
+                              color: Colors.amberAccent,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Press here to select location',
+                                    style: TextStyle(color: Colors.black),
+                                  ),
+                                  Icon(
+                                    Icons.location_on,
+                                    color: Colors.lightBlue,
+                                  ),
+                                ],
+                              ),
                             ),
-                            hintText: 'Search for location',
+                            onPressed: () async {
+                              _handlePressButton();
+                            },
                           ),
                         ),
                       ),
-                    ),
-                    Text('name of $place'),
-                  ],
+                      Row(
+                        children: [
+                          Text(
+                            'Destination: ',
+                            style: kMajorHeadings,
+                          ),
+                          place != null
+                              ? Text(
+                                  '$place',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                  ),
+                                )
+                              : Text('')
+                        ],
+                      ),
+                      divider,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tracking Distance',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                DistanceInfo =
+                                    'This is how far group members can move without triggering an\n alert. Once users go beyond this distance from the location, an alert is triggered';
+                              });
+                            },
+                            icon: Icon(Icons.arrow_downward),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                DistanceInfo = '';
+                              });
+                            },
+                            icon: Icon(Icons.arrow_upward),
+                          ),
+                        ],
+                      ),
+                      DistanceInfo != ''
+                          ? Text(
+                              '$DistanceInfo',
+                              style: TextStyle(
+                                fontSize: 13.0,
+                              ),
+                            )
+                          : Text('Select distance below'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Container(
+                          child: Center(child: androidDropdown()),
+                          height: 35.0,
+                          width: 60.0,
+                          // padding: EdgeInsets.only(bottom: 30.0),
+                          color: Colors.white54,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            distance = 1.5;
+                          });
+                         
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.radio_button_checked_outlined,
+                                color: Colors.white70,
+                              ),
+                              Text(
+                                'Use system set distance of 1.5 KM',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      TextField(
+                        //obscure text is what makes passwords look like passwords
+                        obscureText: true,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black),
+                        onChanged: (value) {
+                          //Do something with the user input.
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter safe word',
+                          fillColor: Colors.white54 ,
+                          filled: true,
+                          contentPadding: EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 20.0),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(32.0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: Colors.lightBlueAccent, width: 1.0),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(32.0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: Colors.lightBlueAccent, width: 2.0),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(32.0)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
