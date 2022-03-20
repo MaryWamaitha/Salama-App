@@ -10,6 +10,10 @@ import 'create_group_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'trial_screen.dart';
+import 'bottommenu.dart';
+import 'active_group_screen.dart';
+import 'moving_screen.dart';
+import 'settings.dart';
 
 final _firestore = FirebaseFirestore.instance;
 User loggedInUser;
@@ -22,6 +26,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   Position _location;
+  int selectedPage = 0;
 
   Future getUserLocation() async {
     bool serviceEnabled;
@@ -189,48 +194,8 @@ class _MainScreenState extends State<MainScreen> {
                 color: Colors.green,
                 size: 100.0,
               ),
-            ), //TODO Add what to show if user location is null eg error message
+            ),
     );
   }
 }
 
-class Menu extends StatelessWidget {
-  const Menu({
-    Key key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 66,
-      color: kMainColour,
-      child: Padding(
-        padding: const EdgeInsets.all(3.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            MenuItem(
-              icon: Icons.home,
-              label: 'Home',
-              page: MainScreen.id,
-            ),
-            MenuItem(
-              icon: Icons.people,
-              label: 'Create Group',
-              page: CreateGroup.id,
-              //Go to Group screen,
-            ),
-            MenuItem(
-                icon: Icons.location_on_rounded,
-                label: 'Active Group',
-              page: RoutesWidget.id,
-            ),
-            MenuItem(icon: Icons.directions_car, label: 'Moving'),
-            MenuItem(icon: Icons.settings, label: 'Settings'),
-          ],
-        ),
-      ),
-    );
-  }
-}

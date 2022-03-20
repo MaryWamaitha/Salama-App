@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import 'dart:math';
 import 'main_screen.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
+import '../Components/icons.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
 
@@ -29,6 +30,8 @@ class _CreateGroupState extends State<CreateGroup> {
   LatLng destination;
   double latitude;
   double longi;
+  String groupName;
+  String safeWord;
   List<String> Users = [];
   List<String> Members = [];
   List<double> Distance = [1, 1.5, 2, 3, 4, 5];
@@ -36,6 +39,7 @@ class _CreateGroupState extends State<CreateGroup> {
   String DistanceInfo = 'Select distance below';
   String SafeWordDetails = 'Tap the down arrow key to learn more';
   final _controller = TextEditingController();
+  final _auth = FirebaseAuth.instance;
   Future<void> getUsers() async {
     // Get docs from collection reference
     QuerySnapshot querySnapshot = await _firestore.collection('users').get();
@@ -74,6 +78,19 @@ class _CreateGroupState extends State<CreateGroup> {
     displayPrediction(p);
   }
 
+  //Getting current user so that we can add them as initial group member
+  void getCurrentUser() {
+    //once a user is registered or logged in then this current user will have  a variable
+    //the current user will be null if nobody is signed in
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        loggedInUser = user;
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
   //Drop Down
   DropdownButton<double> androidDropdown() {
     List<DropdownMenuItem<double>> dropdownItems = [];
@@ -126,6 +143,7 @@ class _CreateGroupState extends State<CreateGroup> {
   void initState() {
     super.initState();
     getUsers();
+    getCurrentUser();
   }
 
   @override
@@ -190,7 +208,6 @@ class _CreateGroupState extends State<CreateGroup> {
                         child: Container(
                           color: Colors.white54,
                           child: Autocomplete<String>(
-
                             optionsBuilder: (TextEditingValue value) {
                               // When the field is empty
                               if (value.text.isEmpty) {
@@ -398,7 +415,6 @@ class _CreateGroupState extends State<CreateGroup> {
                           setState(() {
                             distance = 1.5;
                           });
-                         
                         },
                         child: Container(
                           width: double.infinity,
@@ -432,7 +448,7 @@ class _CreateGroupState extends State<CreateGroup> {
                             onPressed: () {
                               setState(() {
                                 SafeWordDetails =
-                                ' This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around but is only known to you and your group members';
+                                    ' This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around but is only known to you and your group members';
                               });
                             },
                             icon: Icon(Icons.arrow_downward),
@@ -440,7 +456,8 @@ class _CreateGroupState extends State<CreateGroup> {
                           IconButton(
                             onPressed: () {
                               setState(() {
-                                SafeWordDetails = 'Click down arrow to learn more';
+                                SafeWordDetails =
+                                    'Click down arrow to learn more';
                               });
                             },
                             icon: Icon(Icons.arrow_upward),
@@ -449,11 +466,11 @@ class _CreateGroupState extends State<CreateGroup> {
                       ),
                       SafeWordDetails != ''
                           ? Text(
-                        '$SafeWordDetails',
-                        style: TextStyle(
-                          fontSize: 11.0,
-                        ),
-                      )
+                              '$SafeWordDetails',
+                              style: TextStyle(
+                                fontSize: 11.0,
+                              ),
+                            )
                           : Text('Click down arrow to learn more'),
                       // Text(
                       //   'This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around but is only known to you and your group members',
@@ -462,18 +479,18 @@ class _CreateGroupState extends State<CreateGroup> {
                       //   ),
                       // ),
                       Padding(
-                        padding: const EdgeInsets.only(right:25.0, top: 10.0),
+                        padding: const EdgeInsets.only(right: 25.0, top: 10.0),
                         child: SizedBox(
                           width: 250,
                           child: TextField(
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.black),
                             onChanged: (value) {
-                              //Do something with the user input.
+                             safeWord= value;
                             },
                             decoration: InputDecoration(
                               hintText: 'Enter safe word',
-                              fillColor: Colors.white ,
+                              fillColor: Colors.white,
                               filled: true,
                               contentPadding: EdgeInsets.symmetric(
                                   vertical: 8.0, horizontal: 10.0),
@@ -482,7 +499,6 @@ class _CreateGroupState extends State<CreateGroup> {
                               //       BorderRadius.all(Radius.circular(32.0)),
                               // ),
                               enabledBorder: OutlineInputBorder(
-
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(20.0)),
                               ),
@@ -506,11 +522,11 @@ class _CreateGroupState extends State<CreateGroup> {
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.black),
                               onChanged: (value) {
-                                //Do something with the user input.
+                                groupName = value;
                               },
                               decoration: InputDecoration(
                                 hintText: 'Enter group name',
-                                fillColor: Colors.white ,
+                                fillColor: Colors.white,
                                 filled: true,
                                 contentPadding: EdgeInsets.symmetric(
                                     vertical: 8.0, horizontal: 10.0),
@@ -520,13 +536,13 @@ class _CreateGroupState extends State<CreateGroup> {
                                 // ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius:
-                                  BorderRadius.all(Radius.circular(20.0)),
+                                      BorderRadius.all(Radius.circular(20.0)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: Colors.amberAccent, width: 2.0),
                                   borderRadius:
-                                  BorderRadius.all(Radius.circular(20.0)),
+                                      BorderRadius.all(Radius.circular(20.0)),
                                 ),
                               ),
                             ),
@@ -541,14 +557,50 @@ class _CreateGroupState extends State<CreateGroup> {
                 padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                 child: Center(
                   child: TextButton(
-                    onPressed: (){
-                      //what happens when button is pressed
+                    onPressed: () async {
+                      var member1= loggedInUser.email;
+                      final QuerySnapshot activity = await _firestore
+                          .collection('users')
+                          .where('email', isEqualTo: member1)
+                          .get();
+                      final List<DocumentSnapshot> selected =
+                          activity.docs;
+                      var x = selected[0].data() as Map;
+                      var creator = x['username'];
+                     try {
+                       var docRef = await
+                       _firestore.collection('groups').add({
+                         'Name': groupName,
+                         'Distance': distance,
+                         'SafeWord': safeWord,
+                         'Location': GeoPoint(latitude,longi),
+                         'Members': Users,
+                       });
+                       var documentId = docRef.id;
+                       print(' documnent id is $documentId');
+                     }catch (e) {
+                       showDialog(
+                         context: context,
+                         builder: (ctx) => AlertDialog(
+                           title: Text(' Ops! Registration Failed'),
+                           content: Text('${e.message}'),
+                           actions: [
+                             TextButton(
+                               onPressed: () {
+                                 Navigator.of(ctx).pop();
+                               },
+                               child: Text('Okay'),
+                             )
+                           ],
+                         ),
+                       );
+                     }
                     },
                     child: Container(
                       decoration: BoxDecoration(
                           color: Colors.amberAccent,
                           borderRadius: new BorderRadius.all(
-                           const Radius.circular(30.0),
+                            const Radius.circular(30.0),
                           )),
                       height: 50,
                       width: 150.00,
@@ -564,7 +616,10 @@ class _CreateGroupState extends State<CreateGroup> {
                   ),
                 ),
               ),
-              Menu(),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Menu(),
+              ),
             ],
           ),
         ),
