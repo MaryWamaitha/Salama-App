@@ -6,14 +6,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'dart:async';
 import 'dart:math';
-
+import 'main_screen.dart';
 import 'package:google_api_headers/google_api_headers.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
-enum Option { systemset }
 
 class CreateGroup extends StatefulWidget {
   static String id = 'create_group_screen';
@@ -30,13 +28,13 @@ class _CreateGroupState extends State<CreateGroup> {
   String name;
   LatLng destination;
   double latitude;
-  double long;
+  double longi;
   List<String> Users = [];
   List<String> Members = [];
   List<double> Distance = [1, 1.5, 2, 3, 4, 5];
   double distance = 1.5;
   String DistanceInfo = 'Select distance below';
-  Option systemdistance = Option.systemset;
+  String SafeWordDetails = 'Tap the down arrow key to learn more';
   final _controller = TextEditingController();
   Future<void> getUsers() async {
     // Get docs from collection reference
@@ -119,7 +117,7 @@ class _CreateGroupState extends State<CreateGroup> {
         place = name;
         destination = LatLng(lat, lng);
         latitude = destination.latitude;
-        long = destination.longitude;
+        longi = destination.longitude;
       });
     }
   }
@@ -420,35 +418,118 @@ class _CreateGroupState extends State<CreateGroup> {
                           ),
                         ),
                       ),
-                      TextField(
-                        //obscure text is what makes passwords look like passwords
-                        obscureText: true,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.black),
-                        onChanged: (value) {
-                          //Do something with the user input.
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Enter safe word',
-                          fillColor: Colors.white54 ,
-                          filled: true,
-                          contentPadding: EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 20.0),
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(32.0)),
+                      divider,
+                      Row(
+                        children: [
+                          Text(
+                            'Set up group Safe word ?',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.lightBlueAccent, width: 1.0),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(32.0)),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                SafeWordDetails =
+                                ' This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around but is only known to you and your group members';
+                              });
+                            },
+                            icon: Icon(Icons.arrow_downward),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.lightBlueAccent, width: 2.0),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(32.0)),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                SafeWordDetails = 'Click down arrow to learn more';
+                              });
+                            },
+                            icon: Icon(Icons.arrow_upward),
+                          ),
+                        ],
+                      ),
+                      SafeWordDetails != ''
+                          ? Text(
+                        '$SafeWordDetails',
+                        style: TextStyle(
+                          fontSize: 11.0,
+                        ),
+                      )
+                          : Text('Click down arrow to learn more'),
+                      // Text(
+                      //   'This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around but is only known to you and your group members',
+                      //   style: TextStyle(
+                      //     fontSize: 13.0,
+                      //   ),
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.only(right:25.0, top: 10.0),
+                        child: SizedBox(
+                          width: 250,
+                          child: TextField(
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.black),
+                            onChanged: (value) {
+                              //Do something with the user input.
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Enter safe word',
+                              fillColor: Colors.white ,
+                              filled: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 10.0),
+                              // border: OutlineInputBorder(
+                              //   borderRadius:
+                              //       BorderRadius.all(Radius.circular(32.0)),
+                              // ),
+                              enabledBorder: OutlineInputBorder(
+
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20.0)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.amberAccent, width: 2.0),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20.0)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      divider,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 30.0),
+                        child: Center(
+                          child: SizedBox(
+                            width: 200,
+                            child: TextField(
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.black),
+                              onChanged: (value) {
+                                //Do something with the user input.
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Enter group name',
+                                fillColor: Colors.white ,
+                                filled: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 10.0),
+                                // border: OutlineInputBorder(
+                                //   borderRadius:
+                                //       BorderRadius.all(Radius.circular(32.0)),
+                                // ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius:
+                                  BorderRadius.all(Radius.circular(20.0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors.amberAccent, width: 2.0),
+                                  borderRadius:
+                                  BorderRadius.all(Radius.circular(20.0)),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -456,6 +537,34 @@ class _CreateGroupState extends State<CreateGroup> {
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                child: Center(
+                  child: TextButton(
+                    onPressed: (){
+                      //what happens when button is pressed
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.amberAccent,
+                          borderRadius: new BorderRadius.all(
+                           const Radius.circular(30.0),
+                          )),
+                      height: 50,
+                      width: 150.00,
+                      child: Center(
+                        child: Text(
+                          'Create Group',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Menu(),
             ],
           ),
         ),

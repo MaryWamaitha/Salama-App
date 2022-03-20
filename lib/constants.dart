@@ -18,6 +18,7 @@ const kMajorHeadings = TextStyle(
   color: Colors.white,
 );
 
+
 const divider =Divider(
 thickness: 1, // thickness of the line
 color: Colors
