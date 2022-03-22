@@ -8,6 +8,7 @@ import 'Screens/main_screen.dart';
 import 'Screens/login_screen.dart';
 import 'Screens/trial_screen.dart';
 import 'Screens/bottommenu.dart';
+import 'Screens/active_group_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +36,7 @@ class Salama extends StatelessWidget {
         MainScreen.id: (context) => MainScreen(),
         CreateGroup.id: (context) => CreateGroup(),
         RoutesWidget.id: (context) => RoutesWidget(),
-        HomePage.id: (context) => HomePage(),
+        ActiveGroup.id: (context) => ActiveGroup(),
       },
       home: WelcomeScreen(),
     );

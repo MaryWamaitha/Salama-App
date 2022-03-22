@@ -11,6 +11,7 @@ import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 import '../Components/icons.dart';
+import 'active_group_screen.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
 
@@ -38,6 +39,8 @@ class _CreateGroupState extends State<CreateGroup> {
   double distance = 1.5;
   String DistanceInfo = 'Select distance below';
   String SafeWordDetails = 'Tap the down arrow key to learn more';
+  bool safety = true;
+  bool inviteSent = true;
   final _controller = TextEditingController();
   final _auth = FirebaseAuth.instance;
   Future<void> getUsers() async {
@@ -91,6 +94,7 @@ class _CreateGroupState extends State<CreateGroup> {
       print(e);
     }
   }
+
   //Drop Down
   DropdownButton<double> androidDropdown() {
     List<DropdownMenuItem<double>> dropdownItems = [];
@@ -486,7 +490,7 @@ class _CreateGroupState extends State<CreateGroup> {
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.black),
                             onChanged: (value) {
-                             safeWord= value;
+                              safeWord = value;
                             },
                             decoration: InputDecoration(
                               hintText: 'Enter safe word',
@@ -558,43 +562,53 @@ class _CreateGroupState extends State<CreateGroup> {
                 child: Center(
                   child: TextButton(
                     onPressed: () async {
-                      var member1= loggedInUser.email;
+                      var member1 = loggedInUser.email;
                       final QuerySnapshot activity = await _firestore
                           .collection('users')
                           .where('email', isEqualTo: member1)
                           .get();
-                      final List<DocumentSnapshot> selected =
-                          activity.docs;
+                      final List<DocumentSnapshot> selected = activity.docs;
                       var x = selected[0].data() as Map;
                       var creator = x['username'];
-                     try {
-                       var docRef = await
-                       _firestore.collection('groups').add({
-                         'Name': groupName,
-                         'Distance': distance,
-                         'SafeWord': safeWord,
-                         'Location': GeoPoint(latitude,longi),
-                         'Members': Users,
-                       });
-                       var documentId = docRef.id;
-                       print(' documnent id is $documentId');
-                     }catch (e) {
-                       showDialog(
-                         context: context,
-                         builder: (ctx) => AlertDialog(
-                           title: Text(' Ops! Registration Failed'),
-                           content: Text('${e.message}'),
-                           actions: [
-                             TextButton(
-                               onPressed: () {
-                                 Navigator.of(ctx).pop();
-                               },
-                               child: Text('Okay'),
-                             )
-                           ],
-                         ),
-                       );
-                     }
+                      try {
+                        //TODO: Use a Map instead of an array for the members
+                        var docRef = await _firestore.collection('groups').add({
+                          'Name': groupName,
+                          'Distance': distance,
+                          'SafeWord': safeWord,
+                          'Location': GeoPoint(latitude, longi),
+                          'Members': {
+                            'username': creator,
+                            'isSafe': safety,
+                          }
+                        });
+                        var documentId = docRef.id;
+                        for (var invite in Members) {
+                          _firestore.collection('invites').add({
+                            'username': invite,
+                            'gid': documentId,
+                            'inviteSent': inviteSent,
+                            'sender': creator,
+                          });
+                        }
+                        Navigator.pushNamed(context,ActiveGroup.id);
+                      } catch (e) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(' Ops! Registration Failed'),
+                            content: Text('${e.message}'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                },
+                                child: Text('Okay'),
+                              )
+                            ],
+                          ),
+                        );
+                      }
                     },
                     child: Container(
                       decoration: BoxDecoration(

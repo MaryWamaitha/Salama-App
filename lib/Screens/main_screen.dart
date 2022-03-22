@@ -14,6 +14,7 @@ import 'bottommenu.dart';
 import 'active_group_screen.dart';
 import 'moving_screen.dart';
 import 'settings.dart';
+import 'login_screen.dart';
 
 final _firestore = FirebaseFirestore.instance;
 User loggedInUser;
@@ -27,6 +28,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   Position _location;
   int selectedPage = 0;
+  String username;
 
   Future getUserLocation() async {
     bool serviceEnabled;
@@ -103,7 +105,7 @@ class _MainScreenState extends State<MainScreen> {
         position: LatLng(position.latitude, position.longitude),
         // icon: BitmapDescriptor.,
         infoWindow: InfoWindow(
-          title: 'Wamaitha',
+          title: '$username',
         ),
       );
 
@@ -119,13 +121,24 @@ class _MainScreenState extends State<MainScreen> {
   final messageTextController = TextEditingController();
   String email;
   String messageText;
-  void getCurrentUser() {
+  void getCurrentUser() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
       final user = _auth.currentUser;
       if (user != null) {
         loggedInUser = user;
+        var member1 = loggedInUser.email;
+        final QuerySnapshot activity = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: member1)
+            .get();
+        final List<DocumentSnapshot> selected = activity.docs;
+        //TODO: What happens if invite does not exist
+        if (selected.length > 0){
+          var x = selected[0].data() as Map;
+          username = x['username'];
+        }
       }
     } catch (e) {
       print(e);
@@ -153,7 +166,7 @@ class _MainScreenState extends State<MainScreen> {
               onPressed: () {
                 // // the firebase signout method
                 _auth.signOut();
-                Navigator.pop(context);
+                Navigator.pushNamed(context,LoginScreen.id);
               }),
         ],
         title: Text('Salama'),

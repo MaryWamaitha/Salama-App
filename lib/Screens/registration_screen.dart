@@ -19,6 +19,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _auth = FirebaseAuth.instance;
   String email;
   String username;
+  String status = 'inactive';
   String password;
   String cPassword;
   bool showSpinner = false;
@@ -225,10 +226,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   Text('The passwords entered do not much',
                                       style: kErrorTextStyle);
                                 });
+                                //TODO: Make username a unique field and show error if duplicated
                                 try {
                                   _firestore.collection('users').add({
                                     'email': email,
                                     'username': username,
+                                    'status': status,
                                   });
                                   final newUser = await _auth
                                       .createUserWithEmailAndPassword(
