@@ -11,7 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'trial_screen.dart';
 import 'bottommenu.dart';
-import 'active_group_screen.dart';
+import 'invite_screen.dart';
 import 'moving_screen.dart';
 import 'settings.dart';
 import 'login_screen.dart';

@@ -33,6 +33,7 @@ dependencies:
 #  flutter_google_places_hoc081098: ^1.0.0-nullsafety.5
   google_api_headers: ^1.1.1
   rxdart: ^0.26.0
+  geocoding: ^2.0.4
 
 dependency_overrides:
   cloud_firestore_platform_interface: 5.4.13

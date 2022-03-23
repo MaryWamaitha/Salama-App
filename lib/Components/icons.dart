@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../Screens/create_group_screen.dart';
 import '../Screens/trial_screen.dart';
-import '../Screens/active_group_screen.dart';
+import '../Screens/invite_screen.dart';
 import '../Screens/moving_screen.dart';
 import '../Screens/settings.dart';
 import '../Screens/main_screen.dart';
@@ -67,7 +67,7 @@ class Menu extends StatelessWidget {
             MenuItem(
               icon: Icons.location_on_rounded,
               label: 'Active Group',
-              page: ActiveGroup.id,
+              page: Invite.id,
             ),
             MenuItem(icon: Icons.directions_car, label: 'Moving'),
             MenuItem(icon: Icons.settings, label: 'Settings'),

@@ -11,7 +11,7 @@ import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 import '../Components/icons.dart';
-import 'active_group_screen.dart';
+import 'invite_screen.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
 
@@ -24,6 +24,7 @@ class CreateGroup extends StatefulWidget {
 class _CreateGroupState extends State<CreateGroup> {
   final _firestore = FirebaseFirestore.instance;
   String member;
+  String creator;
   String email;
   String user;
   String place;
@@ -32,7 +33,7 @@ class _CreateGroupState extends State<CreateGroup> {
   double latitude;
   double longi;
   String groupName;
-  String safeWord;
+  String safeWord = 'Not set';
   List<String> Users = [];
   List<String> Members = [];
   List<double> Distance = [1, 1.5, 2, 3, 4, 5];
@@ -50,6 +51,7 @@ class _CreateGroupState extends State<CreateGroup> {
     // Get data from docs and convert map to List
     querySnapshot.docs.forEach((doc) {
       Users.add(doc["username"]);
+      Users.remove(creator);
       return Users;
     });
   }
@@ -82,13 +84,21 @@ class _CreateGroupState extends State<CreateGroup> {
   }
 
   //Getting current user so that we can add them as initial group member
-  void getCurrentUser() {
+  void getCurrentUser() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
       final user = _auth.currentUser;
       if (user != null) {
         loggedInUser = user;
+        var member1 = loggedInUser.email;
+        final QuerySnapshot activity = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: member1)
+            .get();
+        final List<DocumentSnapshot> selected = activity.docs;
+        var x = selected[0].data() as Map;
+        creator = x['username'];
       }
     } catch (e) {
       print(e);
@@ -146,8 +156,8 @@ class _CreateGroupState extends State<CreateGroup> {
   @override
   void initState() {
     super.initState();
-    getUsers();
     getCurrentUser();
+    getUsers();
   }
 
   @override
@@ -562,14 +572,6 @@ class _CreateGroupState extends State<CreateGroup> {
                 child: Center(
                   child: TextButton(
                     onPressed: () async {
-                      var member1 = loggedInUser.email;
-                      final QuerySnapshot activity = await _firestore
-                          .collection('users')
-                          .where('email', isEqualTo: member1)
-                          .get();
-                      final List<DocumentSnapshot> selected = activity.docs;
-                      var x = selected[0].data() as Map;
-                      var creator = x['username'];
                       try {
                         //TODO: Use a Map instead of an array for the members
                         var docRef = await _firestore.collection('groups').add({
@@ -589,9 +591,10 @@ class _CreateGroupState extends State<CreateGroup> {
                             'gid': documentId,
                             'inviteSent': inviteSent,
                             'sender': creator,
+                            'destination': place,
                           });
                         }
-                        Navigator.pushNamed(context,ActiveGroup.id);
+                        Navigator.pushNamed(context,Invite.id);
                       } catch (e) {
                         showDialog(
                           context: context,

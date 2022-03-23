@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'main_screen.dart';
-
+import 'package:geocoding/geocoding.dart';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'active_group_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import 'package:google_api_headers/google_api_headers.dart';
@@ -13,13 +13,13 @@ import 'package:google_maps_webservice/places.dart';
 
 final _firestore = FirebaseFirestore.instance;
 
-class ActiveGroup extends StatefulWidget {
-  static String id = 'active_group_screen';
+class Invite extends StatefulWidget {
+  static String id = 'invite_screen';
   @override
-  _ActiveGroupState createState() => _ActiveGroupState();
+  _InviteState createState() => _InviteState();
 }
 
-class _ActiveGroupState extends State<ActiveGroup> {
+class _InviteState extends State<Invite> {
   final _auth = FirebaseAuth.instance;
   String sender;
   String username;
@@ -29,10 +29,12 @@ class _ActiveGroupState extends State<ActiveGroup> {
   String groupID;
   double latitude;
   double longitude;
-
+  String address;
+  String place;
+  List <Map> Invites =[];
 
   //uses logged in user email to get their username
-  void getCurrentUser() async {
+  void getInvites() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
@@ -46,11 +48,11 @@ class _ActiveGroupState extends State<ActiveGroup> {
             .get();
         final List<DocumentSnapshot> selected = activity.docs;
         //TODO: What happens if invite does not exist
-        if (selected.length > 0){
+        if (selected.length > 0) {
           var x = selected[0].data() as Map;
           username = x['username'];
+          getDetails();
         }
-
       }
     } catch (e) {
       print(e);
@@ -59,39 +61,64 @@ class _ActiveGroupState extends State<ActiveGroup> {
 
   //use username to get invite details like GID, sender etc
   void getDetails() async {
-    final QuerySnapshot invite = await _firestore
+    final QuerySnapshot invites = await _firestore
         .collection('invites')
         .where('username', isEqualTo: username)
         .get();
-    final List<DocumentSnapshot> selected = invite.docs;
-    var result = selected[0].data() as Map;
-    groupID= result['gid'];
-    sender = result['sender'];
-    FirebaseFirestore.instance
-        .collection('groups')
-        .doc(groupID)
-        .get()
-        .then((DocumentSnapshot documentSnapshot) {
-      if (documentSnapshot.exists) {
-        final group = documentSnapshot.data() as Map;
-        groupName = group['Name'];
-        latitude = group['Location'].latitude;
-        longitude= group['Location'].longitude;
-        print('Document data: ${documentSnapshot.data()}');
-        print(' destination is $latitude');
-      } else {
-        //TODO: What happens when a user does not have an invite
-        // Navigator.pushNamed(context,)
-        print('Document does not exist on the database');
-      }
-    });
+    final List<DocumentSnapshot> selected = invites.docs;
+    var i = 0;
+    print(selected);
+    int lengthy = selected.length;
+    while (i <= 2) {
+      final result = selected[i].data() as Map;
+      print(result);
+      //Add map here that the information is added to
+      var details = new Map();
+      groupID = result['gid'];
+      sender = result['sender'];
+      place = result['destination'];
+      FirebaseFirestore.instance
+          .collection('groups')
+          .doc(groupID)
+          .get()
+          .then((DocumentSnapshot documentSnapshot) {
+        if (documentSnapshot.exists) {
+          final group = documentSnapshot.data() as Map;
+          groupName = group['Name'];
+          place = group['place'];
+          latitude = group['Location'].latitude;
+          longitude = group['Location'].longitude;
+          getAddress(latitude, longitude);
+          print('Document data: ${documentSnapshot.data()}');
+          var len = group.length;
+          print('length is $lengthy');
+          details['groupName'] = groupName;
+          details['sender'] = sender;
+          details['place'] = result['destination'];
+          Invites.add(details);
 
+          print('invites are $Invites');
+          print(username);
+        } else {
+          var notPresent = true;
+          //TODO: What happens when a user does not have an invite
+          Navigator.pushNamed(context, ActiveGroup.id);
+          print('Document does not exist on the database');
+        }
+      });
+      ++i;
+    }
   }
+
+  void getAddress(lat, long) async {
+    List<Placemark> placemarks = await placemarkFromCoordinates(lat, long);
+    print(' place is $placemarks');
+  }
+
   @override
   void initState() {
     super.initState();
-    getCurrentUser();
-    getDetails();
+    getInvites();
   }
 
   @override
@@ -112,7 +139,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
               child: Padding(
                 padding: EdgeInsets.only(top: 50.0, bottom: 10),
                 child: Text(
-                  'ACTIVE GROUPS',
+                  'GROUPS',
                   style: TextStyle(
                     fontSize: 25,
                   ),

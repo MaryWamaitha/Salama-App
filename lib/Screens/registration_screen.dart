@@ -195,7 +195,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 16.0),
                   child: Material(
-                    color: Colors.blueAccent,
+                    color: kMainColour,
                     borderRadius: BorderRadius.all(Radius.circular(30.0)),
                     elevation: 5.0,
                     child: MaterialButton(
@@ -222,10 +222,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 emailresult.docs;
                             if (emaildocuments.length == 0) {
                               if (password == cPassword) {
-                                setState(() {
-                                  Text('The passwords entered do not much',
-                                      style: kErrorTextStyle);
-                                });
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text(' Registration Failed'),
+                                    content: Text('The passwords entered do not much \n Please enter the passwords again'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                        },
+                                        child: Text('Okay'),
+                                      )
+                                    ],
+                                  ),
+                                );
                                 //TODO: Make username a unique field and show error if duplicated
                                 try {
                                   _firestore.collection('users').add({
