@@ -10,6 +10,7 @@ import 'package:salama/constants.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 final _firestore = FirebaseFirestore.instance;
 
@@ -31,7 +32,9 @@ class _InviteState extends State<Invite> {
   double longitude;
   String address;
   String place;
-  List <Map> Invites =[];
+  String street;
+  List<Map> Invites = [];
+  String senderName;
 
   //uses logged in user email to get their username
   void getInvites() async {
@@ -69,11 +72,11 @@ class _InviteState extends State<Invite> {
     var i = 0;
     print(selected);
     int lengthy = selected.length;
-    while (i <= 2) {
+    while (i <= lengthy) {
       final result = selected[i].data() as Map;
       print(result);
       //Add map here that the information is added to
-      var details = new Map();
+      var details = new Map<String, String>();
       groupID = result['gid'];
       sender = result['sender'];
       place = result['destination'];
@@ -95,8 +98,10 @@ class _InviteState extends State<Invite> {
           details['groupName'] = groupName;
           details['sender'] = sender;
           details['place'] = result['destination'];
-          Invites.add(details);
-
+          // details['street']= street;
+          setState(() {
+            Invites.add(details);
+          });
           print('invites are $Invites');
           print(username);
         } else {
@@ -110,9 +115,16 @@ class _InviteState extends State<Invite> {
     }
   }
 
+  final optionsMap = {
+    111: "First option",
+    222: "Second option",
+  };
+
   void getAddress(lat, long) async {
-    List<Placemark> placemarks = await placemarkFromCoordinates(lat, long);
-    print(' place is $placemarks');
+    List<Placemark> address = await placemarkFromCoordinates(lat, long);
+    Placemark placeMark = address[0];
+    street = placeMark.street;
+    print(' place is $street');
   }
 
   @override
@@ -124,30 +136,58 @@ class _InviteState extends State<Invite> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: kBackgroundColour,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(120.0),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            shape: ContinuousRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(120),
-                bottomRight: Radius.circular(120),
-              ),
+      backgroundColor: kBackgroundColour,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(120.0),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          shape: ContinuousRectangleBorder(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(120),
+              bottomRight: Radius.circular(120),
             ),
-            title: Center(
-              child: Padding(
-                padding: EdgeInsets.only(top: 50.0, bottom: 10),
-                child: Text(
-                  'GROUPS',
-                  style: TextStyle(
-                    fontSize: 25,
-                  ),
+          ),
+          title: Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 50.0, bottom: 10),
+              child: Text(
+                'GROUPS',
+                style: TextStyle(
+                  fontSize: 25,
                 ),
               ),
             ),
-            backgroundColor: kMainColour,
           ),
-        ));
+          backgroundColor: kMainColour,
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Text('Pending Invites'),
+              for (Map user in Invites)
+                Invites.isNotEmpty
+                    ? Card(
+                        child: Column(children: [
+                          Row(
+                            children: [
+                              Icon(Icons.quick_contacts_mail_rounded),
+                              Text(user['place'].toString())
+                            ],
+                          )
+                        ]),
+                      )
+                    : Container(
+                        child: SpinKitFoldingCube(
+                          color: Colors.green,
+                          size: 100.0,
+                        ),
+                      ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
