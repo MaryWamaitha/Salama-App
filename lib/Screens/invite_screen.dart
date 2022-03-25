@@ -168,16 +168,78 @@ class _InviteState extends State<Invite> {
               Text('Pending Invites'),
               for (Map user in Invites)
                 Invites.isNotEmpty
-                    ? Card(
-                        child: Column(children: [
-                          Row(
-                            children: [
-                              Icon(Icons.quick_contacts_mail_rounded),
-                              Text(user['place'].toString())
-                            ],
-                          )
-                        ]),
-                      )
+                    ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 30.0, right: 30.0),
+                        child: Card(
+                  color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.quick_contacts_mail_rounded,
+                                    color: Colors.brown,),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Row(
+                                        children: [
+                                          Text('Sender:',
+                                          style: TextStyle(
+                                            fontSize: 16.0,
+                                            color: Colors.black,
+                                          ),),
+                                          Text(user['sender'].toString(),
+                                            style: TextStyle(
+                                                fontSize: 20.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold
+                                            ),),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Text('Group Name:',
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                        color: Colors.black,
+                                      ),),
+                                    Text(user['groupName'].toString(),
+                                      style: TextStyle(
+                                          fontSize: 20.0,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold
+                                      ),),
+                                  ],
+                                ),
+                                Divider(
+                                  thickness: 1,
+                                  indent: 5,
+                                  endIndent: 5,// thickness of the line
+                                  color: Colors
+                                      .grey, // The color to use when painting the line.
+                                  height: 15, // The divider's height extent.
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(Icons.location_city_outlined,
+                                      color: Colors.green,),
+                                    Text(user['place'].toString(),
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold
+                                      ),),
+                                  ],
+                                ),
+                              ]),
+                            ),
+                          ),
+                      ),
+                    )
                     : Container(
                         child: SpinKitFoldingCube(
                           color: Colors.green,
