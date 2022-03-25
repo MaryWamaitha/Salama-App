@@ -72,13 +72,14 @@ class _InviteState extends State<Invite> {
     var i = 0;
     print(selected);
     int lengthy = selected.length;
-    while (i <= lengthy) {
+    while (i < lengthy) {
       final result = selected[i].data() as Map;
       print(result);
       //Add map here that the information is added to
       var details = new Map<String, String>();
       groupID = result['gid'];
       sender = result['sender'];
+      details['sender'] = sender;
       place = result['destination'];
       FirebaseFirestore.instance
           .collection('groups')
@@ -86,17 +87,18 @@ class _InviteState extends State<Invite> {
           .get()
           .then((DocumentSnapshot documentSnapshot) {
         if (documentSnapshot.exists) {
+          var doc_id2 = documentSnapshot.id;
+          details['docID'] = doc_id2;
           final group = documentSnapshot.data() as Map;
           groupName = group['Name'];
           place = group['place'];
           latitude = group['Location'].latitude;
           longitude = group['Location'].longitude;
           getAddress(latitude, longitude);
-          print('Document data: ${documentSnapshot.data()}');
+          print('Document data: $doc_id2');
           var len = group.length;
           print('length is $lengthy');
           details['groupName'] = groupName;
-          details['sender'] = sender;
           details['place'] = result['destination'];
           // details['street']= street;
           setState(() {
@@ -138,7 +140,7 @@ class _InviteState extends State<Invite> {
     return Scaffold(
       backgroundColor: kBackgroundColour,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(120.0),
+        preferredSize: Size.fromHeight(100.0),
         child: AppBar(
           automaticallyImplyLeading: false,
           shape: ContinuousRectangleBorder(
@@ -151,7 +153,7 @@ class _InviteState extends State<Invite> {
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 10),
               child: Text(
-                'GROUPS',
+                'INVITES',
                 style: TextStyle(
                   fontSize: 25,
                 ),
@@ -161,95 +163,170 @@ class _InviteState extends State<Invite> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Column(
-            children: [
-              Text('Pending Invites'),
-              for (Map user in Invites)
-                Invites.isNotEmpty
-                    ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 30.0, right: 30.0),
-                        child: Card(
-                  color: Colors.white,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Icon(Icons.quick_contacts_mail_rounded,
-                                    color: Colors.brown,),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Row(
-                                        children: [
-                                          Text('Sender:',
-                                          style: TextStyle(
-                                            fontSize: 16.0,
-                                            color: Colors.black,
-                                          ),),
-                                          Text(user['sender'].toString(),
-                                            style: TextStyle(
-                                                fontSize: 20.0,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold
-                                            ),),
-                                        ],
+      body: Invites.isNotEmpty
+          ? SingleChildScrollView(
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Column(
+                    children: [
+                      for (Map user in Invites)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                left: 30.0, right: 30.0, top: 10),
+                            child: Card(
+                              color: Colors.white,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundImage:
+                                            AssetImage('images/group.png'),
+                                        radius: 40,
                                       ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Text('Group Name:',
-                                      style: TextStyle(
-                                        fontSize: 16.0,
-                                        color: Colors.black,
-                                      ),),
-                                    Text(user['groupName'].toString(),
-                                      style: TextStyle(
-                                          fontSize: 20.0,
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 8.0),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              'Sender:',
+                                              style: TextStyle(
+                                                fontSize: 16.0,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            Text(
+                                              user['sender'].toString(),
+                                              style: TextStyle(
+                                                  fontSize: 20.0,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Group Name: ',
+                                        style: TextStyle(
+                                          fontSize: 16.0,
                                           color: Colors.black,
-                                          fontWeight: FontWeight.bold
-                                      ),),
-                                  ],
-                                ),
-                                Divider(
-                                  thickness: 1,
-                                  indent: 5,
-                                  endIndent: 5,// thickness of the line
-                                  color: Colors
-                                      .grey, // The color to use when painting the line.
-                                  height: 15, // The divider's height extent.
-                                ),
-                                Row(
-                                  children: [
-                                    Icon(Icons.location_city_outlined,
-                                      color: Colors.green,),
-                                    Text(user['place'].toString(),
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold
-                                      ),),
-                                  ],
-                                ),
-                              ]),
+                                        ),
+                                      ),
+                                      Text(
+                                        user['groupName'].toString(),
+                                        style: TextStyle(
+                                            fontSize: 20.0,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                  Divider(
+                                    thickness: 1,
+                                    indent: 5,
+                                    endIndent: 5, // thickness of the line
+                                    color: Colors
+                                        .grey, // The color to use when painting the line.
+                                    height: 15, // The divider's height extent.
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_city_outlined,
+                                        color: Colors.green,
+                                        size: 40,
+                                      ),
+                                      Text(
+                                        user['place'].toString(),
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () async {
+                                          var gid = user['docID'];
+                                          await _firestore.collection('active_members').doc(gid).set({
+                                            'username': username,
+                                            'isSafe': true,
+                                          });
+                                          
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: Colors.green,
+                                              borderRadius:
+                                                  new BorderRadius.all(
+                                                Radius.circular(10.0),
+                                              )),
+                                          child: Center(
+                                            child: Text('Accept',
+                                                style: TextStyle(
+                                                  color: Colors.black54,
+                                                )),
+                                          ),
+                                          width: 80,
+                                          height: 30,
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          var ID = user['docID'];
+                                          setState(() {
+                                            _firestore
+                                                .collection("invites")
+                                                .doc(ID)
+                                                .delete();
+                                            Invites.remove(user);
+                                          });
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey,
+                                              borderRadius:
+                                                  new BorderRadius.all(
+                                                Radius.circular(10.0),
+                                              )),
+                                          child: Center(
+                                            child: Text('Decline',
+                                                style: TextStyle(
+                                                  color: Colors.black54,
+                                                )),
+                                          ),
+                                          width: 80,
+                                          height: 30,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ]),
+                              ),
                             ),
                           ),
-                      ),
-                    )
-                    : Container(
-                        child: SpinKitFoldingCube(
-                          color: Colors.green,
-                          size: 100.0,
-                        ),
-                      ),
-            ],
-          ),
-        ),
-      ),
+                        )
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : Container(
+              child: Text('No Groups available'),
+            ),
     );
   }
 }

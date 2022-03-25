@@ -579,12 +579,12 @@ class _CreateGroupState extends State<CreateGroup> {
                           'Distance': distance,
                           'SafeWord': safeWord,
                           'Location': GeoPoint(latitude, longi),
-                          'Members': {
-                            'username': creator,
-                            'isSafe': safety,
-                          }
                         });
                         var documentId = docRef.id;
+                        await _firestore.collection('active_members').doc(documentId).set({
+                          'username': creator,
+                          'isSafe': true,
+                        });
                         for (var invite in Members) {
                           _firestore.collection('invites').add({
                             'username': invite,
