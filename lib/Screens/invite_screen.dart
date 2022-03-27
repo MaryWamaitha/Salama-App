@@ -35,6 +35,7 @@ class _InviteState extends State<Invite> {
   String street;
   List<Map> Invites = [];
   String senderName;
+  String userID;
 
   //uses logged in user email to get their username
   void getInvites() async {
@@ -64,6 +65,14 @@ class _InviteState extends State<Invite> {
 
   //use username to get invite details like GID, sender etc
   void getDetails() async {
+    //getting the User Document ID so that we can update it
+    final QuerySnapshot loggedUser = await _firestore
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .get();
+    final List<DocumentSnapshot> person = loggedUser.docs;
+    userID = person[0].id;
+    //getting the invites that have the username in them
     final QuerySnapshot invites = await _firestore
         .collection('invites')
         .where('username', isEqualTo: username)
@@ -73,14 +82,18 @@ class _InviteState extends State<Invite> {
     print(selected);
     int lengthy = selected.length;
     while (i < lengthy) {
+      var doID = selected[i].id;
       final result = selected[i].data() as Map;
       print(result);
       //Add map here that the information is added to
       var details = new Map<String, String>();
       groupID = result['gid'];
       sender = result['sender'];
-      details['sender'] = sender;
       place = result['destination'];
+      details['sender'] = sender;
+      details['gid'] = groupID;
+      details['userID']= userID;
+      details['docID'] = doID;
       FirebaseFirestore.instance
           .collection('groups')
           .doc(groupID)
@@ -88,14 +101,15 @@ class _InviteState extends State<Invite> {
           .then((DocumentSnapshot documentSnapshot) {
         if (documentSnapshot.exists) {
           var doc_id2 = documentSnapshot.id;
-          details['docID'] = doc_id2;
+
           final group = documentSnapshot.data() as Map;
           groupName = group['Name'];
           place = group['place'];
           latitude = group['Location'].latitude;
           longitude = group['Location'].longitude;
           getAddress(latitude, longitude);
-          print('Document data: $doc_id2');
+          var docuID=  details['docID'];
+          print('Document data: $docuID');
           var len = group.length;
           print('length is $lengthy');
           details['groupName'] = groupName;
@@ -260,12 +274,30 @@ class _InviteState extends State<Invite> {
                                     children: [
                                       TextButton(
                                         onPressed: () async {
-                                          var gid = user['docID'];
-                                          await _firestore.collection('active_members').doc(gid).set({
+                                          var id = user['docID'];
+                                          var gid = user['gid'];
+                                          await _firestore
+                                              .collection('active_members')
+                                              .add({
                                             'username': username,
                                             'isSafe': true,
+                                            'gid': gid
                                           });
-                                          
+                                          await _firestore
+                                              .collection("users")
+                                              .doc(userID)
+                                              .update({
+                                            'status': 'active',
+                                          });
+                                         await _firestore
+                                              .collection("invites")
+                                              .doc(id)
+                                              .delete();
+                                          setState(() {
+                                            Invites.remove(user);
+                                          });
+                                          Navigator.pushNamed(
+                                              context, ActiveGroup.id);
                                         },
                                         child: Container(
                                           decoration: BoxDecoration(

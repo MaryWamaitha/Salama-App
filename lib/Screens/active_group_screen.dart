@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'main_screen.dart';
-
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,6 +11,9 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 
 final _firestore = FirebaseFirestore.instance;
+String username;
+String groupID;
+String leaveGroup= '                         ';
 
 class ActiveGroup extends StatefulWidget {
   static String id = 'active_group_screen';
@@ -22,13 +24,12 @@ class ActiveGroup extends StatefulWidget {
 class _ActiveGroupState extends State<ActiveGroup> {
   final _auth = FirebaseAuth.instance;
   String sender;
-  String username;
   bool showSpinner = false;
   String groupName;
   LatLng destination;
-  String groupID;
   double latitude;
   double longitude;
+  String status;
 
 
   //uses logged in user email to get their username
@@ -46,11 +47,17 @@ class _ActiveGroupState extends State<ActiveGroup> {
             .get();
         final List<DocumentSnapshot> selected = activity.docs;
         //TODO: What happens if invite does not exist
-        if (selected.length > 0){
+        if (selected.length > 0) {
           var x = selected[0].data() as Map;
-          username = x['username'];
-        }
+          setState(() {
+            status = x['status'];
+            username = x['username'];
+          });
 
+          print('username is $username');
+          print('status is $status');
+          getGID();
+        }
       }
     } catch (e) {
       print(e);
@@ -58,40 +65,24 @@ class _ActiveGroupState extends State<ActiveGroup> {
   }
 
   //use username to get invite details like GID, sender etc
-  void getDetails() async {
-    final QuerySnapshot invite = await _firestore
-        .collection('invites')
+  void getGID() async {
+    final QuerySnapshot user = await _firestore
+        .collection('active_members')
         .where('username', isEqualTo: username)
         .get();
-    final List<DocumentSnapshot> selected = invite.docs;
+    final List<DocumentSnapshot> selected = user.docs;
     var result = selected[0].data() as Map;
-    groupID= result['gid'];
-    sender = result['sender'];
-    FirebaseFirestore.instance
-        .collection('groups')
-        .doc(groupID)
-        .get()
-        .then((DocumentSnapshot documentSnapshot) {
-      if (documentSnapshot.exists) {
-        final group = documentSnapshot.data() as Map;
-        groupName = group['Name'];
-        latitude = group['Location'].latitude;
-        longitude= group['Location'].longitude;
-        print('Document data: ${documentSnapshot.data()}');
-        print(' destination is $latitude');
-      } else {
-        //TODO: What happens when a user does not have an invite
-        // Navigator.pushNamed(context,)
-        print('Document does not exist on the database');
-      }
+    print('Grpup details are $result');
+    setState(() {
+      groupID = result['gid'];
+      sender = result['sender'];
     });
-
   }
+
   @override
   void initState() {
     super.initState();
     getCurrentUser();
-    getDetails();
   }
 
   @override
@@ -99,28 +90,144 @@ class _ActiveGroupState extends State<ActiveGroup> {
     return Scaffold(
         backgroundColor: kBackgroundColour,
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(120.0),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            shape: ContinuousRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(120),
-                bottomRight: Radius.circular(120),
+            preferredSize: Size.fromHeight(120.0),
+            child: AppBar(
+              automaticallyImplyLeading: false,
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(120),
+                  bottomRight: Radius.circular(120),
+                ),
               ),
-            ),
-            title: Center(
-              child: Padding(
-                padding: EdgeInsets.only(top: 50.0, bottom: 10),
-                child: Text(
-                  'ACTIVE GROUPS',
-                  style: TextStyle(
-                    fontSize: 25,
+              title: Center(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 50.0, bottom: 10),
+                  child: Text(
+                    'ACTIVE GROUPS',
+                    style: TextStyle(
+                      fontSize: 25,
+                    ),
                   ),
                 ),
               ),
+              backgroundColor: kMainColour,
+            )),
+        body: status == 'active'
+            ? SafeArea(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      MembersStream(),
+                    ]),
+              )
+            : Text('Not in any group'));
+  }
+}
+
+class MembersStream extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('active_members')
+          .where('gid', isEqualTo: groupID)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(
+            //TODO: What happens when there is no active group
+            child: Text(
+              'No active groups',
             ),
-            backgroundColor: kMainColour,
+          );
+        }
+        final members = snapshot.data.docs.reversed;
+        List<MemberStatus> MembersStatuses = [];
+        for (var member in members) {
+          final memberUname = member['username'];
+          final memberSafety = member['isSafe'];
+
+          final currentUser = loggedInUser.email;
+
+          final memberStatus = MemberStatus(
+            member: memberUname,
+            isSafe: memberSafety,
+            isMe: username == memberUname,
+          );
+
+          MembersStatuses.add(memberStatus);
+        }
+        return Expanded(
+          child: ListView(
+            padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 20.0),
+            children: MembersStatuses,
           ),
-        ));
+        );
+      },
+    );
+  }
+}
+
+class MemberStatus extends StatelessWidget {
+  MemberStatus({this.member, this.isSafe, this.isMe});
+
+  final String member;
+  final bool isSafe;
+  final bool isMe;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          Column(
+            children: [
+              CircleAvatar(
+                backgroundImage: AssetImage('images/profile.jpg'),
+                radius: 20,
+              ),
+              Text('$member'),
+            ],
+          ),
+          isSafe == true
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.check_box,
+                        color: Colors.green,
+                        size: 40,
+                      ),
+                    ),
+                    // isMe == true ? Text('Leave Group') : Text(''),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Icon(
+                      Icons.warning,
+                      color: Colors.red,
+                      size: 40,
+                    ),
+                    isMe == true ? Text('Leave Group') : Text(''),
+                  ],
+                ),
+          isMe == true
+              ? TextButton(
+                  onPressed: () {
+                    //TODO: When user clicks leave group, show Pin screen requesting pin to process leaving
+                  },
+                  child: Text('Exit Group'),
+                )
+              : Text('$leaveGroup'),
+        ],
+      ),
+    );
   }
 }

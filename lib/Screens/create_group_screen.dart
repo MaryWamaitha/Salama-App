@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:salama/Screens/active_group_screen.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,6 +29,7 @@ class _CreateGroupState extends State<CreateGroup> {
   String email;
   String user;
   String place;
+  String userID;
   String name;
   LatLng destination;
   double latitude;
@@ -97,7 +99,8 @@ class _CreateGroupState extends State<CreateGroup> {
             .where('email', isEqualTo: member1)
             .get();
         final List<DocumentSnapshot> selected = activity.docs;
-        var x = selected[0].data() as Map;
+        final x = selected[0].data() as Map;
+        userID = selected[0].id;
         creator = x['username'];
       }
     } catch (e) {
@@ -579,11 +582,19 @@ class _CreateGroupState extends State<CreateGroup> {
                           'Distance': distance,
                           'SafeWord': safeWord,
                           'Location': GeoPoint(latitude, longi),
+                          'Destination': place,
                         });
                         var documentId = docRef.id;
-                        await _firestore.collection('active_members').doc(documentId).set({
+                        await _firestore.collection('active_members').add({
                           'username': creator,
                           'isSafe': true,
+                          'gid': documentId,
+                        });
+                        await _firestore
+                            .collection("users")
+                            .doc(userID)
+                            .update({
+                          'status': 'active',
                         });
                         for (var invite in Members) {
                           _firestore.collection('invites').add({
@@ -594,7 +605,7 @@ class _CreateGroupState extends State<CreateGroup> {
                             'destination': place,
                           });
                         }
-                        Navigator.pushNamed(context,Invite.id);
+                        Navigator.pushNamed(context, ActiveGroup.id);
                       } catch (e) {
                         showDialog(
                           context: context,

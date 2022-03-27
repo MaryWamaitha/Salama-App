@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:salama/Screens/active_group_screen.dart';
 import '../constants.dart';
 import '../Screens/create_group_screen.dart';
 import '../Screens/trial_screen.dart';
@@ -14,26 +15,26 @@ class MenuItem extends StatelessWidget {
   final String page;
   @override
   Widget build(BuildContext context) {
-            return Column(
-              children: [
-                IconButton(
-                   icon:Icon(
-                    icon,
-                    color: Colors.white70,
-                    size: 30.0,
-                  ),
-                  onPressed:() {
-                    Navigator.pushNamed(context,page);
-                  } ,
-                ),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                  ),
-                )
-              ],
-            );
+    return Column(
+      children: [
+        IconButton(
+          icon: Icon(
+            icon,
+            color: Colors.white70,
+            size: 30.0,
+          ),
+          onPressed: () {
+            Navigator.pushNamed(context, page);
+          },
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+          ),
+        )
+      ],
+    );
   }
 }
 
@@ -59,6 +60,11 @@ class Menu extends StatelessWidget {
               page: MainScreen.id,
             ),
             MenuItem(
+              icon: Icons.person_add,
+              label: 'Invites',
+              page: Invite.id,
+            ),
+            MenuItem(
               icon: Icons.people,
               label: 'Create Group',
               page: CreateGroup.id,
@@ -67,7 +73,7 @@ class Menu extends StatelessWidget {
             MenuItem(
               icon: Icons.location_on_rounded,
               label: 'Active Group',
-              page: Invite.id,
+              page: ActiveGroup.id,
             ),
             MenuItem(icon: Icons.directions_car, label: 'Moving'),
             MenuItem(icon: Icons.settings, label: 'Settings'),
@@ -77,4 +83,3 @@ class Menu extends StatelessWidget {
     );
   }
 }
-
