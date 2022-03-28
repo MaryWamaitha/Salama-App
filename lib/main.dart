@@ -8,7 +8,6 @@ import 'Screens/registration_screen.dart';
 import 'Screens/main_screen.dart';
 import 'Screens/login_screen.dart';
 import 'Screens/trial_screen.dart';
-import 'Screens/bottommenu.dart';
 import 'Screens/invite_screen.dart';
 
 void main() async {

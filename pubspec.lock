@@ -324,6 +324,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.10.0+5"
+  haversine_distance:
+    dependency: "direct main"
+    description:
+      name: haversine_distance
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.2.1"
   http:
     dependency: "direct main"
     description:

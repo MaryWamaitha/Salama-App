@@ -29,6 +29,10 @@ class _MainScreenState extends State<MainScreen> {
   Position _location;
   int selectedPage = 0;
   String username;
+  LatLng userLocation;
+  String status;
+  String docuID;
+  Set<Marker> _markers = Set<Marker>();
 
   Future getUserLocation() async {
     bool serviceEnabled;
@@ -78,41 +82,61 @@ class _MainScreenState extends State<MainScreen> {
   );
   // final Set<Marker> _markers = {};
 
-  void _onMapCreated(GoogleMapController _cntlr) {
+  void _onMapCreated(GoogleMapController _cntlr) async  {
     getUserLocation();
+    if (status == 'active') {
+      // if a user is acrive, save their location to database anytime it is changed
+      await _firestore.collection("users").doc(docuID).update({
+        'location': GeoPoint(userLocation.latitude, userLocation.longitude),
+      });
+    }
     _controller = _cntlr;
     _controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(_location.latitude, _location.longitude),
-          zoom: 18.0,
+          zoom: 15.0,
         ),
       ),
     );
+
+
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position position) {
+          setState(() {
+            // markers[MarkerId('user')] = marker;
+            userLocation = LatLng(position.latitude, position.longitude);
+            print(' user location is $userLocation');
+          });
       _controller.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
             target: LatLng(position.latitude, position.longitude),
-            zoom: 18.0,
+            zoom: 15.0,
           ),
-        ),
-      );
-      final marker = Marker(
-        markerId: MarkerId('place_name'),
-        position: LatLng(position.latitude, position.longitude),
-        // icon: BitmapDescriptor.,
-        infoWindow: InfoWindow(
-          title: '$username',
         ),
       );
 
       setState(() {
-        markers[MarkerId('place_name')] = marker;
+        _markers.removeWhere((m) => m.markerId.value == 'First user');
+        _markers.add(Marker(
+          markerId: MarkerId('First user'),
+          position: LatLng(position.latitude, position.longitude),
+          infoWindow: InfoWindow(
+            title: '$username',
+          ),
+        ));
       });
+
+      if (status == 'active') {
+        // if a user is acrive, save their location to database anytime it is changed
+         _firestore.collection("users").doc(docuID).update({
+          'location': GeoPoint(userLocation.latitude, userLocation.longitude),
+        });
+      }
     });
+
   }
 
   //create an instance of firebase auth that we will use out all through out the page
@@ -135,9 +159,22 @@ class _MainScreenState extends State<MainScreen> {
             .get();
         final List<DocumentSnapshot> selected = activity.docs;
         //TODO: What happens if invite does not exist
-        if (selected.length > 0){
+        if (selected.length > 0) {
           var x = selected[0].data() as Map;
-          username = x['username'];
+          //setting the username, docuID and status to the values gotten from the database
+          setState(() {
+            username = x['username'];
+            //getting userID so that we use it to update location
+            docuID = selected[0].id;
+            status = x['status'];
+          });
+          if (status == 'active') {
+            // if a user is acrive, save their location to database anytime it is changed
+            await _firestore.collection("users").doc(docuID).update({
+              'location':
+                  GeoPoint(userLocation.latitude, userLocation.longitude),
+            });
+          }
         }
       }
     } catch (e) {
@@ -166,7 +203,7 @@ class _MainScreenState extends State<MainScreen> {
               onPressed: () {
                 // // the firebase signout method
                 _auth.signOut();
-                Navigator.pushNamed(context,LoginScreen.id);
+                Navigator.pushNamed(context, LoginScreen.id);
               }),
         ],
         title: Text('Salama'),
@@ -193,7 +230,7 @@ class _MainScreenState extends State<MainScreen> {
                               LatLng(_location.latitude, _location.longitude),
                           zoom: 12.0,
                         ),
-                        markers: markers.values.toSet(),
+                        markers: _markers,
                         mapType: MapType.normal,
                       ),
                     ),
@@ -211,4 +248,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-

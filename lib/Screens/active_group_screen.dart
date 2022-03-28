@@ -3,17 +3,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'main_screen.dart';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'dart:async';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:math';
 
 final _firestore = FirebaseFirestore.instance;
 String username;
 String groupID;
-String leaveGroup= '                         ';
+String leaveGroup = '                         ';
 
 class ActiveGroup extends StatefulWidget {
   static String id = 'active_group_screen';
@@ -27,13 +29,16 @@ class _ActiveGroupState extends State<ActiveGroup> {
   bool showSpinner = false;
   String groupName;
   LatLng destination;
-  double latitude;
-  double longitude;
+  LatLng userLocation;
+  double userLatitude;
+  double userLongitude;
+  double groupLatitude;
+  double groupLongitude;
   String status;
-
+  double Distance;
 
   //uses logged in user email to get their username
-  void getCurrentUser() async {
+  void getUserDetails() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
@@ -41,31 +46,78 @@ class _ActiveGroupState extends State<ActiveGroup> {
       if (user != null) {
         loggedInUser = user;
         var member1 = loggedInUser.email;
-        final QuerySnapshot activity = await _firestore
-            .collection('users')
-            .where('email', isEqualTo: member1)
-            .get();
-        final List<DocumentSnapshot> selected = activity.docs;
-        //TODO: What happens if invite does not exist
-        if (selected.length > 0) {
-          var x = selected[0].data() as Map;
-          setState(() {
-            status = x['status'];
-            username = x['username'];
-          });
+          final QuerySnapshot activity = await _firestore
+              .collection('users')
+              .where('email', isEqualTo: member1)
+              .get();
+          final List<DocumentSnapshot> selected = activity.docs;
+          //TODO: What happens if invite does not exist
+          if (selected.length > 0) {
+            var x = selected[0].data() as Map;
+            setState(() {
+              status = x['status'];
+              username = x['username'];
+              userLocation =
+                  LatLng(x['location'].latitude, x['location'].longitude);
+              userLatitude = x['location'].latitude;
+              userLongitude = x['location'].longitude;
+            });
 
-          print('username is $username');
-          print('status is $status');
-          getGID();
-        }
+                print('username is $username');
+                print('status is $status');
+                print('initial location is $userLocation');
+                getGroupDetails();
+                getUserLocation();
+              }
+
       }
     } catch (e) {
       print(e);
     }
   }
 
+  void startLocating (){
+    Timer.periodic(Duration(seconds: 20), (timer) async {
+      getUserLocation();
+    });
+  }
+
+  void getUserLocation() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        loggedInUser = user;
+        var member1 = loggedInUser.email;
+
+        final QuerySnapshot activity = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: member1)
+            .get();
+        final List<DocumentSnapshot> selected = activity.docs;
+        if (selected.length > 0) {
+          var x = selected[0].data() as Map;
+          setState(() {
+            userLocation =
+                LatLng(x['location'].latitude, x['location'].longitude);
+            userLatitude = x['location'].latitude;
+            userLongitude = x['location'].longitude;
+          });
+          //every ten seconds, get the user location from the database
+          print(' the location evben  when changed ois $userLocation');
+        }
+
+
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+
+
   //use username to get invite details like GID, sender etc
-  void getGID() async {
+  void getGroupDetails() async {
+    //getting the username which is used to get the users active group - user can only be in active group for one group
     final QuerySnapshot user = await _firestore
         .collection('active_members')
         .where('username', isEqualTo: username)
@@ -77,12 +129,59 @@ class _ActiveGroupState extends State<ActiveGroup> {
       groupID = result['gid'];
       sender = result['sender'];
     });
+    //using the GID to get group details
+    FirebaseFirestore.instance
+        .collection('groups')
+        .doc(groupID)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+        final details = documentSnapshot.data() as Map;
+        setState(() {
+          groupName = details['Name'];
+          Distance = details['Distance'];
+          groupLatitude = details['Location'].latitude;
+          groupLongitude = details['Location'].longitude;
+          destination = LatLng(
+              details['Location'].latitude, details['Location'].longitude);
+          print(' destination is $destination');
+        });
+      }
+    });
+  }
+
+  //track user function
+  void activity() {
+    Timer.periodic(Duration(seconds: 60), (timer)  {
+      trackUser(userLatitude, userLongitude, groupLatitude, groupLongitude);
+    });
+  }
+
+  void trackUser(lat1, lon1, lat2, lon2) {
+    bool active;
+
+    var p = 0.017453292519943295;
+    var a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    double distance = 12742 * asin(sqrt(a));
+    if (distance < 2) {
+      active = true;
+      // Timer.periodic(Duration(seconds: 30), (timer) {});
+    } else {
+      active = false;
+    }
+    print('activity is $active');
+
+    print('distance is $distance');
   }
 
   @override
   void initState() {
     super.initState();
-    getCurrentUser();
+    getUserDetails();
+    activity();
+    startLocating();
   }
 
   @override
@@ -119,6 +218,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       MembersStream(),
+
                     ]),
               )
             : Text('Not in any group'));
