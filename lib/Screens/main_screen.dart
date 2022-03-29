@@ -33,6 +33,11 @@ class _MainScreenState extends State<MainScreen> {
   String status;
   String docuID;
   Set<Marker> _markers = Set<Marker>();
+  final _auth = FirebaseAuth.instance;
+  //the text controller helps us in managing the text field eg clearing it when the send button is clicked
+  final messageTextController = TextEditingController();
+  String email;
+  String messageText;
 
   Future getUserLocation() async {
     bool serviceEnabled;
@@ -71,6 +76,7 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _location = _locationData;
     });
+
   }
 
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
@@ -107,7 +113,7 @@ class _MainScreenState extends State<MainScreen> {
           setState(() {
             // markers[MarkerId('user')] = marker;
             userLocation = LatLng(position.latitude, position.longitude);
-            print(' user location is $userLocation');
+            print(' user location is $userLocation and user is $username');
           });
       _controller.animateCamera(
         CameraUpdate.newCameraPosition(
@@ -130,7 +136,7 @@ class _MainScreenState extends State<MainScreen> {
       });
 
       if (status == 'active') {
-        // if a user is acrive, save their location to database anytime it is changed
+        // if a user is active, save their location to database anytime it is changed
          _firestore.collection("users").doc(docuID).update({
           'location': GeoPoint(userLocation.latitude, userLocation.longitude),
         });
@@ -140,11 +146,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   //create an instance of firebase auth that we will use out all through out the page
-  final _auth = FirebaseAuth.instance;
-  //the text controller helps us in managing the text field eg clearing it when the send button is clicked
-  final messageTextController = TextEditingController();
-  String email;
-  String messageText;
+
   void getCurrentUser() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
@@ -186,8 +188,8 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    getUserLocation();
     getCurrentUser();
+    getUserLocation();
   }
 
   //this method returns a future

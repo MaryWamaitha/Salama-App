@@ -6,9 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
-import 'package:google_api_headers/google_api_headers.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
+import '../Components/icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math';
 
@@ -121,7 +119,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
         .get();
     final List<DocumentSnapshot> selected = user.docs;
     var result = selected[0].data() as Map;
-    activeID= selected[0].id;
+    activeID = selected[0].id;
     print('Group details are $result');
     setState(() {
       groupID = result['gid'];
@@ -153,13 +151,11 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //once the activity is set to true, this timer stops working
   void activateTimer() {
     Timer.periodic(Duration(seconds: 60), (timer) async {
-      var value = initializeTracking(userLatitude, userLongitude, groupLatitude, groupLongitude);
-     //if the activity is now true, updating the tracking field in database and switching of timer
-      if (value == true ){
-        await _firestore
-            .collection("active_members")
-            .doc(activeID)
-            .update({
+      var value = initializeTracking(
+          userLatitude, userLongitude, groupLatitude, groupLongitude);
+      //if the activity is now true, updating the tracking field in database and switching of timer
+      if (value == true) {
+        await _firestore.collection("active_members").doc(activeID).update({
           'tracking': true,
         });
         timer.cancel();
@@ -168,7 +164,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
       }
     });
   }
-
 
   //checks user location when group is created compared to destination and either marks tracking as true
   //or false. true means you are now at location and tracking can begin. False means that you are not
@@ -194,22 +189,17 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //function that runs every 30 seconds and checks if you are still at location
   void trackingTimer() {
     Timer.periodic(Duration(seconds: 30), (timer) async {
-      var value = trackingUser(userLatitude, userLongitude, groupLatitude, groupLongitude);
+      var value = trackingUser(
+          userLatitude, userLongitude, groupLatitude, groupLongitude);
       //if the activity is now true, updating the tracking field in database and switching of timer
-      if (value == false ){
-        await _firestore
-            .collection("active_members")
-            .doc(activeID)
-            .update({
+      if (value == false) {
+        await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': false,
         });
         //TODO: This will run until the user either enters pin or multiple group members say that user is safe
         print('value is updateed and timer cancelled');
       } else {
-        await _firestore
-            .collection("active_members")
-            .doc(activeID)
-            .update({
+        await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': true,
         });
       }
@@ -229,12 +219,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
       setState(() {
         isSafe = false;
       });
-
     } else {
       setState(() {
         isSafe = true;
       });
-
     }
     print('user isSafe is $isSafe');
     print('distance is $distance');
@@ -282,7 +270,40 @@ class _ActiveGroupState extends State<ActiveGroup> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text('Group: $groupName',
+                          style: kMajorHeadings),
+                        ),
+                      ),
                       MembersStream(),
+                      TextButton(
+                        onPressed: (){
+                          //TODO: When user clicks leave group, show Pin screen requesting pin to process leaving
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(60.0,30,60,60),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.amberAccent,
+                                borderRadius: new BorderRadius.all(
+                                  const Radius.circular(30.0),
+                                )),
+                            height: 50,
+                            width: 150.00,
+                            child: Center(
+                              child: Text(
+                                'Leave Group',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Menu(),
                     ]),
               )
             : Text('Not in any group'));
@@ -324,8 +345,9 @@ class MembersStream extends StatelessWidget {
         }
         return Expanded(
           child: ListView(
-            padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 20.0),
+            padding: EdgeInsets.symmetric(horizontal: 10.0),
             children: MembersStatuses,
+
           ),
         );
       },
@@ -347,47 +369,37 @@ class MemberStatus extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          Column(
-            children: [
-              CircleAvatar(
-                backgroundImage: AssetImage('images/profile.jpg'),
-                radius: 20,
-              ),
-              Text('$member'),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  backgroundImage: AssetImage('images/profile.jpg'),
+                  radius: 20,
+                ),
+                Text('$member'),
+                isMe == true ? (Text('(Me)')) : Text('')
+              ],
+            ),
           ),
           isSafe == true
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.check_box,
-                        color: Colors.green,
-                        size: 40,
-                      ),
-                    ),
-                    // isMe == true ? Text('Leave Group') : Text(''),
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Icon(
-                      Icons.warning,
-                      color: Colors.red,
-                      size: 40,
-                    ),
-                    // isMe == true ? Text('Leave Group') : Text(''),
-                  ],
-                ),
-          isMe == true
+              ? Icon(
+                Icons.check_box,
+                color: Colors.green,
+                size: 40,
+              )
+              : Icon(
+                Icons.warning,
+                color: Colors.red,
+                size: 40,
+              ),
+          // isSafe== false  ? Text('Safe(Ignore)') : Text('$leaveGroup'),
+          isMe == false && isSafe == false
               ? TextButton(
                   onPressed: () {
-                    //TODO: When user clicks leave group, show Pin screen requesting pin to process leaving
+                   //TODO: What happens when unsafe user is actually okay
                   },
-                  child: Text('Exit Group'),
+                  child: Text('Safe(Ignore)'),
                 )
               : Text('$leaveGroup'),
         ],
