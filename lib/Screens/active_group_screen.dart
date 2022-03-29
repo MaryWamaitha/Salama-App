@@ -36,6 +36,8 @@ class _ActiveGroupState extends State<ActiveGroup> {
   double groupLongitude;
   String status;
   double Distance;
+  String activeID;
+  bool isSafe;
 
   //uses logged in user email to get their username
   void getUserDetails() async {
@@ -46,49 +48,49 @@ class _ActiveGroupState extends State<ActiveGroup> {
       if (user != null) {
         loggedInUser = user;
         var member1 = loggedInUser.email;
-          final QuerySnapshot activity = await _firestore
-              .collection('users')
-              .where('email', isEqualTo: member1)
-              .get();
-          final List<DocumentSnapshot> selected = activity.docs;
-          //TODO: What happens if invite does not exist
-          if (selected.length > 0) {
-            var x = selected[0].data() as Map;
-            setState(() {
-              status = x['status'];
-              username = x['username'];
-              userLocation =
-                  LatLng(x['location'].latitude, x['location'].longitude);
-              userLatitude = x['location'].latitude;
-              userLongitude = x['location'].longitude;
-            });
+        final QuerySnapshot activity = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: member1)
+            .get();
+        final List<DocumentSnapshot> selected = activity.docs;
+        //TODO: What happens if invite does not exist
+        if (selected.length > 0) {
+          var x = selected[0].data() as Map;
+          setState(() {
+            status = x['status'];
+            username = x['username'];
+            userLocation =
+                LatLng(x['location'].latitude, x['location'].longitude);
+            userLatitude = x['location'].latitude;
+            userLongitude = x['location'].longitude;
+          });
 
-                print('username is $username');
-                print('status is $status');
-                print('initial location is $userLocation');
-                getGroupDetails();
-                getUserLocation();
-              }
-
+          print('username is $username');
+          print('status is $status');
+          print('initial location is $userLocation');
+          getGroupDetails();
+          getUserLocation();
+        }
       }
     } catch (e) {
       print(e);
     }
   }
 
-  void startLocating (){
+  //every 20 seconds, get the user location from the database
+  void startLocating() {
     Timer.periodic(Duration(seconds: 20), (timer) async {
       getUserLocation();
     });
   }
 
+  //method for getting user location and updating it locally
   void getUserLocation() async {
     try {
       final user = _auth.currentUser;
       if (user != null) {
         loggedInUser = user;
         var member1 = loggedInUser.email;
-
         final QuerySnapshot activity = await _firestore
             .collection('users')
             .where('email', isEqualTo: member1)
@@ -102,29 +104,25 @@ class _ActiveGroupState extends State<ActiveGroup> {
             userLatitude = x['location'].latitude;
             userLongitude = x['location'].longitude;
           });
-          //every ten seconds, get the user location from the database
           print(' the location evben  when changed ois $userLocation');
         }
-
-
       }
     } catch (e) {
       print(e);
     }
   }
 
-
-
   //use username to get invite details like GID, sender etc
   void getGroupDetails() async {
-    //getting the username which is used to get the users active group - user can only be in active group for one group
+    //getting the username which is used to get the users active group - user can only be in one active group for one group
     final QuerySnapshot user = await _firestore
         .collection('active_members')
         .where('username', isEqualTo: username)
         .get();
     final List<DocumentSnapshot> selected = user.docs;
     var result = selected[0].data() as Map;
-    print('Grpup details are $result');
+    activeID= selected[0].id;
+    print('Group details are $result');
     setState(() {
       groupID = result['gid'];
       sender = result['sender'];
@@ -150,37 +148,104 @@ class _ActiveGroupState extends State<ActiveGroup> {
     });
   }
 
-  //track user function
-  void activity() {
-    Timer.periodic(Duration(seconds: 60), (timer)  {
-      trackUser(userLatitude, userLongitude, groupLatitude, groupLongitude);
+  //TODO: CHange this to every 2 minutes
+  //every minute, check if the user has arrived at location
+  //once the activity is set to true, this timer stops working
+  void activateTimer() {
+    Timer.periodic(Duration(seconds: 60), (timer) async {
+      var value = initializeTracking(userLatitude, userLongitude, groupLatitude, groupLongitude);
+     //if the activity is now true, updating the tracking field in database and switching of timer
+      if (value == true ){
+        await _firestore
+            .collection("active_members")
+            .doc(activeID)
+            .update({
+          'tracking': true,
+        });
+        timer.cancel();
+        trackingTimer();
+        print('value is updateed and timer cancelled');
+      }
     });
   }
 
-  void trackUser(lat1, lon1, lat2, lon2) {
-    bool active;
 
+  //checks user location when group is created compared to destination and either marks tracking as true
+  //or false. true means you are now at location and tracking can begin. False means that you are not
+  //yet at location and tracking cannot begin
+  bool initializeTracking(lat1, lon1, lat2, lon2) {
+    bool active;
     var p = 0.017453292519943295;
+    //method for calculating distance between two points
     var a = 0.5 -
         cos((lat2 - lat1) * p) / 2 +
         cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
     double distance = 12742 * asin(sqrt(a));
     if (distance < 2) {
       active = true;
-      // Timer.periodic(Duration(seconds: 30), (timer) {});
     } else {
       active = false;
     }
     print('activity is $active');
-
     print('distance is $distance');
+    return active;
+  }
+
+  //function that runs every 30 seconds and checks if you are still at location
+  void trackingTimer() {
+    Timer.periodic(Duration(seconds: 30), (timer) async {
+      var value = trackingUser(userLatitude, userLongitude, groupLatitude, groupLongitude);
+      //if the activity is now true, updating the tracking field in database and switching of timer
+      if (value == false ){
+        await _firestore
+            .collection("active_members")
+            .doc(activeID)
+            .update({
+          'isSafe': false,
+        });
+        //TODO: This will run until the user either enters pin or multiple group members say that user is safe
+        print('value is updateed and timer cancelled');
+      } else {
+        await _firestore
+            .collection("active_members")
+            .doc(activeID)
+            .update({
+          'isSafe': true,
+        });
+      }
+    });
+  }
+
+  //main tracking function that keeps track of user location relative to group destination
+  bool trackingUser(lat1, lon1, lat2, lon2) {
+    bool active;
+    var p = 0.017453292519943295;
+    //method for calculating distance between two points
+    var a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    double distance = 12742 * asin(sqrt(a));
+    if (distance > Distance) {
+      setState(() {
+        isSafe = false;
+      });
+
+    } else {
+      setState(() {
+        isSafe = true;
+      });
+
+    }
+    print('user isSafe is $isSafe');
+    print('distance is $distance');
+    return isSafe;
   }
 
   @override
   void initState() {
     super.initState();
     getUserDetails();
-    activity();
+    activateTimer();
     startLocating();
   }
 
@@ -218,7 +283,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       MembersStream(),
-
                     ]),
               )
             : Text('Not in any group'));
@@ -315,7 +379,7 @@ class MemberStatus extends StatelessWidget {
                       color: Colors.red,
                       size: 40,
                     ),
-                    isMe == true ? Text('Leave Group') : Text(''),
+                    // isMe == true ? Text('Leave Group') : Text(''),
                   ],
                 ),
           isMe == true
