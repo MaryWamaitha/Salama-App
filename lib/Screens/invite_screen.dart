@@ -23,6 +23,7 @@ class Invite extends StatefulWidget {
 class _InviteState extends State<Invite> {
   final _auth = FirebaseAuth.instance;
   String sender;
+  User loggedInUser;
   String username;
   bool showSpinner = false;
   String groupName;

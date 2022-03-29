@@ -37,6 +37,23 @@ const kMessageContainerDecoration = BoxDecoration(
   ),
 );
 
+const kDataEntryFieldDecoration= InputDecoration(
+hintText: 'Contact Name',
+fillColor: Colors.white,
+filled: true,
+contentPadding: EdgeInsets.symmetric(
+vertical: 8.0, horizontal: 10.0),
+enabledBorder: OutlineInputBorder(
+borderRadius:
+BorderRadius.all(Radius.circular(20.0)),
+),
+focusedBorder: OutlineInputBorder(
+borderSide: BorderSide(
+color: Colors.amberAccent, width: 2.0),
+borderRadius:
+BorderRadius.all(Radius.circular(20.0)),
+),
+);
 const kMainColour = Color(0xff466558);
 const kPageColour = Color(0xff31463d);
 const kBackgroundColour = Color(0xff24342e);

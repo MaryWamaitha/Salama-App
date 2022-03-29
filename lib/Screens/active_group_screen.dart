@@ -14,6 +14,7 @@ final _firestore = FirebaseFirestore.instance;
 String username;
 String groupID;
 String leaveGroup = '                         ';
+User loggedInUser;
 
 class ActiveGroup extends StatefulWidget {
   static String id = 'active_group_screen';
@@ -25,6 +26,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   final _auth = FirebaseAuth.instance;
   String sender;
   bool showSpinner = false;
+
   String groupName;
   LatLng destination;
   LatLng userLocation;

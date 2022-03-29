@@ -16,9 +16,6 @@ import 'moving_screen.dart';
 import 'settings.dart';
 import 'login_screen.dart';
 
-final _firestore = FirebaseFirestore.instance;
-User loggedInUser;
-
 class MainScreen extends StatefulWidget {
   static String id = 'chat_screen';
   @override
@@ -26,6 +23,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final _firestore = FirebaseFirestore.instance;
+  User loggedInUser;
   Position _location;
   int selectedPage = 0;
   String username;
@@ -73,10 +72,15 @@ class _MainScreenState extends State<MainScreen> {
 
     final _locationData = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
-    setState(() {
+    setState(() async {
       _location = _locationData;
+      if (status == 'active') {
+        // if a user is acrive, save their location to database anytime it is changed
+        await _firestore.collection("users").doc(docuID).update({
+          'location': GeoPoint(_location.latitude, _location.longitude),
+        });
+      }
     });
-
   }
 
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
@@ -84,18 +88,11 @@ class _MainScreenState extends State<MainScreen> {
   GoogleMapController _controller;
   final LocationSettings locationSettings = LocationSettings(
     accuracy: LocationAccuracy.bestForNavigation,
-    distanceFilter: 100,
   );
   // final Set<Marker> _markers = {};
 
-  void _onMapCreated(GoogleMapController _cntlr) async  {
+  void _onMapCreated(GoogleMapController _cntlr) async {
     getUserLocation();
-    if (status == 'active') {
-      // if a user is acrive, save their location to database anytime it is changed
-      await _firestore.collection("users").doc(docuID).update({
-        'location': GeoPoint(userLocation.latitude, userLocation.longitude),
-      });
-    }
     _controller = _cntlr;
     _controller.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -106,15 +103,19 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
-
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position position) {
-          setState(() {
-            // markers[MarkerId('user')] = marker;
-            userLocation = LatLng(position.latitude, position.longitude);
-            print(' user location is $userLocation and user is $username');
-          });
+      setState(() {
+        // markers[MarkerId('user')] = marker;
+        userLocation = LatLng(position.latitude, position.longitude);
+      });
+      if (status == 'active') {
+        // if a user is active, save their location to database anytime it is changed
+        _firestore.collection("users").doc(docuID).update({
+          'location': GeoPoint(userLocation.latitude, userLocation.longitude),
+        });
+      }
       _controller.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
@@ -124,25 +125,15 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
-      setState(() {
-        _markers.removeWhere((m) => m.markerId.value == 'First user');
-        _markers.add(Marker(
-          markerId: MarkerId('First user'),
-          position: LatLng(position.latitude, position.longitude),
-          infoWindow: InfoWindow(
-            title: '$username',
-          ),
-        ));
-      });
-
-      if (status == 'active') {
-        // if a user is active, save their location to database anytime it is changed
-         _firestore.collection("users").doc(docuID).update({
-          'location': GeoPoint(userLocation.latitude, userLocation.longitude),
-        });
-      }
+      _markers.removeWhere((m) => m.markerId.value == 'First user');
+      _markers.add(Marker(
+        markerId: MarkerId('First user'),
+        position: LatLng(position.latitude, position.longitude),
+        infoWindow: InfoWindow(
+          title: '$username',
+        ),
+      ));
     });
-
   }
 
   //create an instance of firebase auth that we will use out all through out the page

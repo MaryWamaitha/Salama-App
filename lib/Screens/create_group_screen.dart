@@ -30,6 +30,7 @@ class _CreateGroupState extends State<CreateGroup> {
   String user;
   String place;
   String userID;
+  User loggedInUser;
   String name;
   LatLng destination;
   double latitude;
