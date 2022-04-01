@@ -18,12 +18,10 @@ const kMajorHeadings = TextStyle(
   color: Colors.white,
 );
 
-
-const divider =Divider(
-thickness: 1, // thickness of the line
-color: Colors
-    .white70, // The color to use when painting the line.
-height: 20, // The divider's height extent.
+const divider = Divider(
+  thickness: 1, // thickness of the line
+  color: Colors.white70, // The color to use when painting the line.
+  height: 20, // The divider's height extent.
 );
 const kMessageTextFieldDecoration = InputDecoration(
   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
@@ -37,22 +35,18 @@ const kMessageContainerDecoration = BoxDecoration(
   ),
 );
 
-const kDataEntryFieldDecoration= InputDecoration(
-hintText: 'Contact Name',
-fillColor: Colors.white,
-filled: true,
-contentPadding: EdgeInsets.symmetric(
-vertical: 8.0, horizontal: 10.0),
-enabledBorder: OutlineInputBorder(
-borderRadius:
-BorderRadius.all(Radius.circular(20.0)),
-),
-focusedBorder: OutlineInputBorder(
-borderSide: BorderSide(
-color: Colors.amberAccent, width: 2.0),
-borderRadius:
-BorderRadius.all(Radius.circular(20.0)),
-),
+const kDataEntryFieldDecoration = InputDecoration(
+  hintText: 'Contact Name',
+  fillColor: Colors.white,
+  filled: true,
+  contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderSide: BorderSide(color: Colors.amberAccent, width: 2.0),
+    borderRadius: BorderRadius.all(Radius.circular(20.0)),
+  ),
 );
 const kMainColour = Color(0xff466558);
 const kPageColour = Color(0xff31463d);

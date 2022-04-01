@@ -72,15 +72,15 @@ class _MainScreenState extends State<MainScreen> {
 
     final _locationData = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
-    setState(() async {
+    setState(()  {
       _location = _locationData;
-      if (status == 'active') {
-        // if a user is acrive, save their location to database anytime it is changed
-        await _firestore.collection("users").doc(docuID).update({
-          'location': GeoPoint(_location.latitude, _location.longitude),
-        });
-      }
     });
+    if (status == 'active') {
+      // if a user is acrive, save their location to database anytime it is changed
+      await _firestore.collection("users").doc(docuID).update({
+        'location': GeoPoint(_location.latitude, _location.longitude),
+      });
+    }
   }
 
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
@@ -161,13 +161,6 @@ class _MainScreenState extends State<MainScreen> {
             docuID = selected[0].id;
             status = x['status'];
           });
-          if (status == 'active') {
-            // if a user is acrive, save their location to database anytime it is changed
-            await _firestore.collection("users").doc(docuID).update({
-              'location':
-                  GeoPoint(userLocation.latitude, userLocation.longitude),
-            });
-          }
         }
       }
     } catch (e) {

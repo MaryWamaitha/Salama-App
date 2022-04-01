@@ -411,12 +411,16 @@ class _CreateGroupState extends State<CreateGroup> {
                         ],
                       ),
                       DistanceInfo != ''
-                          ? Text(
-                              '$DistanceInfo',
-                              style: TextStyle(
-                                fontSize: 13.0,
-                              ),
-                            )
+                          ? Row(
+                            children: [
+                              Text(
+                                  '$DistanceInfo',
+                                  style: TextStyle(
+                                    fontSize: 13.0,
+                                  ),
+                                ),
+                            ],
+                          )
                           : Text('Select distance below'),
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),

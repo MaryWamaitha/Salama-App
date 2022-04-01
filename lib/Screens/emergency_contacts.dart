@@ -13,25 +13,27 @@ import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 import '../Components/icons.dart';
 import 'invite_screen.dart';
+import '../constants.dart';
+import 'add_contact.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
 final _firestore = FirebaseFirestore.instance;
 String userID;
+User loggedInUser;
 
-class AddContact extends StatefulWidget {
-  static String id = 'create_group_screen';
+class EmergencyContact extends StatefulWidget {
+  static String id = 'emergency_contacts';
   @override
-  _AddContactState createState() => _AddContactState();
+  _EmergencyContactState createState() => _EmergencyContactState();
 }
 
-class _AddContactState extends State<AddContact> {
+class _EmergencyContactState extends State<EmergencyContact> {
   String member;
   String creator;
   String contactEmail;
   String email;
   String user;
   String place;
-  User loggedInUser;
   String name;
   String phone;
   String safeWord = 'Not set';
@@ -92,7 +94,7 @@ class _AddContactState extends State<AddContact> {
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 10),
               child: Text(
-                'ADD CONTACT',
+                'EMERGENCY CONTACTS',
                 style: TextStyle(
                   fontSize: 25,
                 ),
@@ -102,15 +104,43 @@ class _AddContactState extends State<AddContact> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Card(
-            elevation: 10,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ContactsStream(),
+                Container(
+
+                    child: ContactsStream()),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AddContact.id);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.amberAccent,
+                          borderRadius: new BorderRadius.all(
+                            const Radius.circular(30.0),
+                          )),
+                      height: 50,
+                      width: 150.00,
+                      child: Center(
+                        child: Text(
+                          'Add New',
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Menu(),
               ],
             ),
           ),
@@ -131,7 +161,6 @@ class ContactsStream extends StatelessWidget {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(
-            //TODO: What happens when there is no active group
             child: Text(
               'You dont have an emergncy contact, /n add new ones below',
             ),
@@ -143,21 +172,31 @@ class ContactsStream extends StatelessWidget {
           final contactName = member['name'];
           final phone = member['phone'];
           final email = member['email'];
-
-          final currentUser = loggedInUser.email;
+          final docuID = member.id;
 
           final contact = Contact(
             name: contactName,
             phone: phone,
             email: email,
+            docuID: docuID,
           );
 
           ContactList.add(contact);
         }
         return Expanded(
-          child: ListView(
-            padding: EdgeInsets.symmetric(horizontal: 10.0),
-            children: ContactList,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: kPageColour,
+                  borderRadius: new BorderRadius.all(
+                 const Radius.circular(10.0),
+                  )),
+              child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                children: ContactList,
+              ),
+            ),
           ),
         );
       },
@@ -166,37 +205,74 @@ class ContactsStream extends StatelessWidget {
 }
 
 class Contact extends StatelessWidget {
-  Contact({this.name, this.phone, this.email});
+  Contact({this.name, this.phone, this.email, this.docuID});
 
   final String name;
   final String phone;
   final String email;
+  final String docuID;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(10.0),
+      padding: EdgeInsets.fromLTRB(8,15,18.0,15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               Text(
                 name,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
+                textAlign: TextAlign.left,
               ),
-              Text(phone, style: TextStyle(
-                fontSize: 11,
-              ),),
-              Text(email, style: TextStyle(
-                fontSize: 11,
-              ),)
+              Text(
+                phone,
+                style: TextStyle(
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                email,
+                style: TextStyle(
+                  fontSize: 11,
+                ),
+              )
             ],
-
-          )
+          ),
+          TextButton(
+            onPressed: () {
+              //TODO: when edit button is clicked, pass over the contact Id to be used in editing on edit page
+            },
+            child: Row(
+              children: [
+                Text('Edit',
+               ),
+                Icon(
+                  Icons.arrow_forward_ios_outlined,
+                  size: 15,
+                )
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.delete,
+              color: Colors.white70,
+              size: 20.0,
+            ),
+            onPressed: () async {
+              await _firestore
+                  .collection("emergency_contacts")
+                  .doc(docuID)
+                  .delete();
+            },
+          ),
         ],
       ),
     );

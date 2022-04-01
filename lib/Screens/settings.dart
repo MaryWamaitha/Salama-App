@@ -3,9 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'main_screen.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import '../constants.dart';
+import 'emergency_contacts.dart';
 
 class SettingsPage extends StatefulWidget {
-  static String id = 'login_screen';
+  static String id = 'settings';
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
@@ -20,13 +21,13 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
         backgroundColor: kBackgroundColour,
         appBar: PreferredSize(
-            preferredSize: Size.fromHeight(120.0),
+            preferredSize: Size.fromHeight(100.0),
             child: AppBar(
               automaticallyImplyLeading: false,
               shape: ContinuousRectangleBorder(
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(120),
-                  bottomRight: Radius.circular(120),
+                  bottomLeft: Radius.circular(100),
+                  bottomRight: Radius.circular(100),
                 ),
               ),
               title: Center(
@@ -43,18 +44,30 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: kMainColour,
             )),
         body: SafeArea(
-          child: Column(
-            children: [
-              settingsItems(mainText:'Emergency Contacts', explanation: 'Edit your emergency contacts, add new ones or delete here'),
-              settingsItems(mainText:'Security Code', explanation: 'Set your security code which you can use to let people tracking you know you are safe'),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10.0,40,10,10),
+            child: Column(
+              children: [
+                settingsItems(
+                  mainText: 'Emergency Contacts',
+                  explanation:
+                      'Edit your emergency contacts, add new ones \n or delete existing ones here',
+                  page: EmergencyContact.id,
+                ),
+                SizedBox(height: 60,),
+                settingsItems(
+                    mainText: 'Security Code',
+                    explanation:
+                        'Set your security code which you can use to let \n people tracking you know you are safe'),
+              ],
+            ),
           ),
         ));
   }
 }
 
 class settingsItems extends StatelessWidget {
-  settingsItems({this.mainText,this.explanation, this.page});
+  settingsItems({this.mainText, this.explanation, this.page});
   final String mainText;
   final String explanation;
   final String page;
@@ -62,18 +75,20 @@ class settingsItems extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-             mainText,
+              mainText,
               style: TextStyle(
                 fontSize: 16.0,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            Text(explanation
-             ,
+            Text(
+              explanation,
               style: TextStyle(
                 fontSize: 11.0,
               ),

@@ -31,19 +31,11 @@ class _AddContactState extends State<AddContact> {
   String contactEmail;
   String email;
   String user;
-  String place;
+
   String userID;
   User loggedInUser;
   String name;
   String phone;
-  String safeWord = 'Not set';
-  List<String> Users = [];
-  List<String> Members = [];
-  List<double> Distance = [1, 1.5, 2, 3, 4, 5];
-  double distance = 1.5;
-  String DistanceInfo = 'Select distance below';
-  String SafeWordDetails = 'Tap the down arrow key to learn more';
-  bool safety = true;
   bool inviteSent = true;
   final _controller = TextEditingController();
   final _auth = FirebaseAuth.instance;
