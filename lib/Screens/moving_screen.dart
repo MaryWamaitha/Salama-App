@@ -41,6 +41,7 @@ class _MovingState extends State<Moving> {
   LatLng destination;
   double latitude;
   double longi;
+  String ETADetails = '';
   double currentLat;
   double currentLong;
   String groupName;
@@ -51,7 +52,7 @@ class _MovingState extends State<Moving> {
   List<double> Distance = [1, 1.5, 2, 3, 4, 5];
   double distance = 1.5;
   String ETAInfo = '';
-  bool safety = true;
+  String status ;
   bool inviteSent = true;
   List<Map> Contacts = [];
   List<String> contactNames = [];
@@ -161,8 +162,12 @@ class _MovingState extends State<Moving> {
             .get();
         final List<DocumentSnapshot> selected = activity.docs;
         final x = selected[0].data() as Map;
-        userID = selected[0].id;
-        creator = x['username'];
+        setState(() {
+          userID = selected[0].id;
+          creator = x['username'];
+          status = x['status'];
+
+        });
         getContacts();
       }
     } catch (e) {
@@ -245,7 +250,9 @@ class _MovingState extends State<Moving> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: SafeArea(
+      body:
+      status == 'inactive' ?
+      SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,16 +343,17 @@ class _MovingState extends State<Moving> {
                           IconButton(
                             onPressed: () {
                               setState(() {
-                                ETAInfo =
-                                    'This is how long our current calculations indicate it will take to \n to get to the destination. Please \n note that traffic conditions may cause affect this and if you are safe just taking \n longer than expected, you will be asked to enter a pin';
+                                 ETADetails=
+                                    'This is how long our current calculations indicate it will take to \n to get to the destination. Please  note that traffic conditions may \n cause affect this and if you are safe just taking longer \n than expected, you will be asked to enter a pin';
                               });
+
                             },
                             icon: Icon(Icons.arrow_downward),
                           ),
                           IconButton(
                             onPressed: () {
                               setState(() {
-                                ETAInfo = '';
+                                ETADetails = '';
                               });
                             },
                             icon: Icon(Icons.arrow_upward),
@@ -353,9 +361,16 @@ class _MovingState extends State<Moving> {
                         ],
                       ),
                       Text(
-                        '$ETAInfo',
+                        '$ETADetails',
                         style: TextStyle(
                           fontSize: 13.0,
+                        ),
+                      ),
+
+                      Text(
+                        'Estimated duration is $ETAInfo',
+                        style: TextStyle(
+                          fontSize: 14.0,
                         ),
                       ),
                       divider,
@@ -390,7 +405,7 @@ class _MovingState extends State<Moving> {
                                     }
                                   }
                                 })
-                            : Text(''),
+                            : Text('You dont have any emergency contacts, pleaese add some \n in the settings page'),
                     ],
                   ),
                 ),
@@ -464,7 +479,9 @@ class _MovingState extends State<Moving> {
             ],
           ),
         ),
-      ),
+      ) :
+          //TODO: Design the text for you are already active to be more aesthetically please
+      Container ( child: Text (' You are already active ')),
     );
   }
 }

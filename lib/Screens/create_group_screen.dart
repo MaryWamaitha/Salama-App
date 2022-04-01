@@ -594,6 +594,7 @@ class _CreateGroupState extends State<CreateGroup> {
                           'username': creator,
                           'isSafe': true,
                           'gid': documentId,
+                          'tracking': false,
                         });
                         await _firestore
                             .collection("users")
