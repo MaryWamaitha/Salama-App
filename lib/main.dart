@@ -3,8 +3,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import 'package:salama/Screens/bottommenu.dart';
 import 'package:salama/Screens/create_group_screen.dart';
+import 'package:salama/Screens/create_pin.dart';
 import 'package:salama/Screens/emergency_contacts.dart';
 import 'package:salama/Screens/moving_screen.dart';
+import 'package:salama/Screens/repeat_pin.dart';
 import 'Screens/welcome_screen.dart';
 import 'Screens/registration_screen.dart';
 import 'Screens/main_screen.dart';
@@ -46,6 +48,8 @@ class Salama extends StatelessWidget {
         AddContact.id: (context) => AddContact(),
         Moving.id: (context) => Moving(),
         MovingActive.id: (context) => MovingActive(),
+        CreatePin.id: (context) => CreatePin(),
+        RepeatPin.id: (context) => RepeatPin(),
       },
       //TODO: If user is already logged in on device, they should be redirected to the main_screen page
       home: WelcomeScreen(),

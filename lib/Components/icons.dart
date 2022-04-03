@@ -75,8 +75,16 @@ class Menu extends StatelessWidget {
               label: 'Active Group',
               page: ActiveGroup.id,
             ),
-            MenuItem(icon: Icons.directions_car, label: 'Moving', page: Moving.id,),
-            MenuItem(icon: Icons.settings, label: 'Settings', page: SettingsPage.id,),
+            MenuItem(
+              icon: Icons.directions_car,
+              label: 'Moving',
+              page: Moving.id,
+            ),
+            MenuItem(
+              icon: Icons.settings,
+              label: 'Settings',
+              page: CreateGroup.id,
+            ),
           ],
         ),
       ),

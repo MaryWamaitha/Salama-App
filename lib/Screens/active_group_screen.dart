@@ -26,7 +26,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   final _auth = FirebaseAuth.instance;
   String sender;
   bool showSpinner = false;
-
+  String userID;
   String groupName;
   LatLng destination;
   LatLng userLocation;
@@ -35,6 +35,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   double groupLatitude;
   double groupLongitude;
   String status;
+  bool tracking = false;
   double Distance;
   String activeID;
   bool isSafe;
@@ -57,6 +58,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
         if (selected.length > 0) {
           var x = selected[0].data() as Map;
           setState(() {
+            userID = selected[0].id;
             status = x['status'];
             username = x['username'];
             userLocation =
@@ -98,6 +100,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
         final List<DocumentSnapshot> selected = activity.docs;
         if (selected.length > 0) {
           var x = selected[0].data() as Map;
+
           setState(() {
             userLocation =
                 LatLng(x['location'].latitude, x['location'].longitude);
@@ -125,6 +128,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
     print('Group details are $result');
     setState(() {
       groupID = result['gid'];
+      tracking = result['tracking'];
       sender = result['sender'];
     });
     //using the GID to get group details
@@ -152,19 +156,25 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //every minute, check if the user has arrived at location
   //once the activity is set to true, this timer stops working
   void activateTimer() {
-    Timer.periodic(Duration(seconds: 60), (timer) async {
-      var value = initializeTracking(
-          userLatitude, userLongitude, groupLatitude, groupLongitude);
-      //if the activity is now true, updating the tracking field in database and switching of timer
-      if (value == true) {
-        await _firestore.collection("active_members").doc(activeID).update({
-          'tracking': true,
-        });
-        timer.cancel();
-        trackingTimer();
-        print('value is updateed and timer cancelled');
-      }
-    });
+    getGroupDetails();
+    print(' the use is beibg tracked $tracking');
+    if (tracking == false) {
+      Timer.periodic(Duration(seconds: 60), (timer) async {
+        var value = initializeTracking(
+            userLatitude, userLongitude, groupLatitude, groupLongitude);
+        //if the activity is now true, updating the tracking field in database and switching of timer
+        if (value == true) {
+          await _firestore.collection("active_members").doc(activeID).update({
+            'tracking': true,
+          });
+          timer.cancel();
+          trackingTimer();
+          print('value is updateed and timer cancelled');
+        }
+      });
+    } else {
+      trackingTimer();
+    }
   }
 
   //checks user location when group is created compared to destination and either marks tracking as true
@@ -275,17 +285,27 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 8.0),
-                          child: Text('Group: $groupName',
-                          style: kMajorHeadings),
+                          child:
+                              Text('Group: $groupName', style: kMajorHeadings),
                         ),
                       ),
                       MembersStream(),
                       TextButton(
-                        onPressed: (){
-                          //TODO: When user clicks leave group, show Pin screen requesting pin to process leaving
+                        onPressed: () async {
+                          await _firestore
+                              .collection("active_members")
+                              .doc(activeID)
+                              .delete();
+                          await _firestore
+                              .collection("users")
+                              .doc(userID)
+                              .update({
+                            'status': 'inactive',
+                          });
+                          Navigator.pushNamed(context, MainScreen.id);
                         },
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(60.0,30,60,60),
+                          padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
                           child: Container(
                             decoration: BoxDecoration(
                                 color: Colors.amberAccent,
@@ -349,7 +369,6 @@ class MembersStream extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
             children: MembersStatuses,
-
           ),
         );
       },
@@ -386,20 +405,20 @@ class MemberStatus extends StatelessWidget {
           ),
           isSafe == true
               ? Icon(
-                Icons.check_box,
-                color: Colors.green,
-                size: 40,
-              )
+                  Icons.check_box,
+                  color: Colors.green,
+                  size: 40,
+                )
               : Icon(
-                Icons.warning,
-                color: Colors.red,
-                size: 40,
-              ),
+                  Icons.warning,
+                  color: Colors.red,
+                  size: 40,
+                ),
           // isSafe== false  ? Text('Safe(Ignore)') : Text('$leaveGroup'),
           isMe == false && isSafe == false
               ? TextButton(
                   onPressed: () {
-                   //TODO: What happens when unsafe user is actually okay
+                    //TODO: What happens when unsafe user is actually okay
                   },
                   child: Text('Safe(Ignore)'),
                 )

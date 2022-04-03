@@ -33,11 +33,20 @@ class _MovingActiveState extends State<MovingActive> {
   String destination;
   String user;
   String place;
+  bool isSafe;
   String userID;
+  String docID;
   User loggedInUser;
+  int ETA;
+  LatLng userLocation;
+  double userLatitude;
+  double userLongitude;
+  LatLng destLocation;
+  double destLatitude;
+  double destLongitude;
   String name;
   String phone;
-  String Users;
+  String Users = '';
   String safeWord = 'Not set';
   List<String> Contacts = [];
   List<String> Members = [];
@@ -50,6 +59,66 @@ class _MovingActiveState extends State<MovingActive> {
   final _auth = FirebaseAuth.instance;
   bool userNameValidate = false;
   TextEditingController userNameController = TextEditingController();
+
+  void getUserLocation() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        loggedInUser = user;
+        var member1 = loggedInUser.email;
+        final QuerySnapshot activity = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: member1)
+            .get();
+        final List<DocumentSnapshot> selected = activity.docs;
+        if (selected.length > 0) {
+          var x = selected[0].data() as Map;
+          setState(() {
+            userLocation =
+                LatLng(x['location'].latitude, x['location'].longitude);
+            userLatitude = x['location'].latitude;
+            userLongitude = x['location'].longitude;
+          });
+          print(' the location evben  when changed ois $userLocation');
+        }
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  bool trackingUser(lat1, lon1, lat2, lon2) {
+    bool active;
+    var p = 0.017453292519943295;
+    //method for calculating distance between two points
+    var a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    double distance = 12742 * asin(sqrt(a));
+    if (distance > 1) {
+      setState(() {
+        isSafe = false;
+      });
+    } else {
+      setState(() {
+        isSafe = true;
+      });
+    }
+    print('user isSafe is $isSafe');
+    print('distance is $distance');
+    return isSafe;
+  }
+
+  void userCheckIn() {
+    Timer.periodic(Duration(minutes: ETA), (timer) async {
+      getUserLocation();
+      var safety = trackingUser(
+          userLatitude, userLongitude, destLatitude, destLongitude);
+      if (safety == false) {
+//TODO: Activating moving mode
+      }
+    });
+  }
 
   //Getting current user so that we can add them as initial group member
   void getCurrentUser() async {
@@ -68,6 +137,17 @@ class _MovingActiveState extends State<MovingActive> {
         final x = selected[0].data() as Map;
         userID = selected[0].id;
         creator = x['username'];
+        final QuerySnapshot moving = await _firestore
+            .collection('moving_mode')
+            .where('userID', isEqualTo: userID)
+            .get();
+        final List<DocumentSnapshot> isMoving = moving.docs;
+        final m = isMoving[0].data() as Map;
+        ETA = m['duration'];
+        destination = m['destination'];
+        Contacts = m['selectedContacts'];
+        destLatitude = m['destCoordinates'].latitude;
+        destLongitude = m['destCoordinates'].longitude;
       }
     } catch (e) {
       print(e);
@@ -82,14 +162,19 @@ class _MovingActiveState extends State<MovingActive> {
 
   @override
   Widget build(BuildContext context) {
-    final  Map<String, Object> rcvdData = ModalRoute.of(context).settings.arguments;
-    for ( var contact in  {rcvdData['list']}){
-      Users = ( '$contact ');
+    final Map<String, Object> rcvdData =
+        ModalRoute.of(context).settings.arguments;
+    for (var contact in rcvdData['list']) {
+      setState(() {
+        Users = Users + contact.toString();
+      });
     }
+    userID = rcvdData['userID'];
+    docID = rcvdData['docID'];
     return Scaffold(
       backgroundColor: kBackgroundColour,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(120.0),
+        preferredSize: Size.fromHeight(100.0),
         child: AppBar(
           automaticallyImplyLeading: false,
           shape: ContinuousRectangleBorder(
@@ -102,7 +187,7 @@ class _MovingActiveState extends State<MovingActive> {
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 10),
               child: Text(
-                'ADD CONTACT',
+                'MOVING MODE ACTIVATED',
                 style: TextStyle(
                   fontSize: 25,
                 ),
@@ -112,20 +197,62 @@ class _MovingActiveState extends State<MovingActive> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: SafeArea(
-        child: Expanded (
+      body:
+          //TODO: Getting to this page even when if coming from home page and still having the values
+          SafeArea(
+        child: Expanded(
           //TODO: Implement bottom navigation bar
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Padding(
                 padding: const EdgeInsets.all(15.0),
-                child: Card(
-                  color: kPageColour,
-                  elevation: 10,
-                  child: Text(
-                    'You are moving towards  ${rcvdData['destination']} and are expected to take\n'
-                        ' ${rcvdData['time']} from  ${rcvdData['timeActivated']}.  \n $Users will be notified if you do not arrive on time ',
+                child: Container(
+                  height: 200,
+                  child: Card(
+                    color: kPageColour,
+                    elevation: 10,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 3, 10, 3),
+                        child: Text(
+                          'You are moving towards  ${rcvdData['destination']} and are expected to take'
+                          ' ${rcvdData['time']} from  ${rcvdData['timeActivated']}.  \n \n $Users will be notified if you do not arrive on time ',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await _firestore
+                      .collection("moving_mode")
+                      .doc(docID)
+                      .delete();
+                  await _firestore.collection("users").doc(userID).update({
+                    'status': 'inactive',
+                  });
+                  Navigator.pushNamed(context, MainScreen.id);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(60.0, 10, 60, 60),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.amberAccent,
+                        borderRadius: new BorderRadius.all(
+                          const Radius.circular(30.0),
+                        )),
+                    height: 50,
+                    width: 150.00,
+                    child: Center(
+                      child: Text(
+                        'DEACTIVATE',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

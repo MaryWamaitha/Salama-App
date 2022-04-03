@@ -15,6 +15,7 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   //creating an instance of firestore
   final _firestore = FirebaseFirestore.instance;
+
   //we create the the authentification as private to avoid other classes from tampering with it
   final _auth = FirebaseAuth.instance;
   String email;
@@ -23,8 +24,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String password;
   String cPassword;
   bool showSpinner = false;
+  int available = 0;
 
   final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,7 +62,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.black),
                   onChanged: (value) {
-                    email = value; //Do something with the user input.
+                    email = value;
+                  },
+                  validator: (email) {
+                    if (email == null || email.isEmpty) {
+                      return 'Email must be entered';
+                    }
+                    if (!email.contains(RegExp(
+                        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+"))) {
+                      return "Please enter a valid email";
+                    }
+                    return null;
                   },
                   decoration: InputDecoration(
                     hintText: 'Enter your email',
@@ -69,13 +82,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 1.0),
+                      borderSide: BorderSide(color: kMainColour, width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2.0),
+                      borderSide: BorderSide(color: kMainColour, width: 2.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                   ),
@@ -84,7 +95,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   height: 8.0,
                 ),
                 TextFormField(
-                  //this puts the @ sign in the keyboard when typing emails
                   keyboardType: TextInputType.text,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.black),
@@ -95,17 +105,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         .where('username', isEqualTo: username)
                         .get();
                     final List<DocumentSnapshot> documents = result.docs;
-                    validator:
-                    (value) {
-                      if (username == null || username.isEmpty) {
-                        return 'Please enter some text';
-                      } else if (documents.length > 0) {
-                        return 'Username is already taken';
-                      } else {
-                        username = value;
-                        return null;
-                      }
-                    };
+                    available = documents.length;
+                  },
+                  validator: (username) {
+                    if (username == null || username.isEmpty) {
+                      return 'Please enter a username';
+                    } else {
+                      return null;
+                    }
                   },
                   decoration: InputDecoration(
                     hintText: 'Enter a unique Username',
@@ -115,13 +122,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 1.0),
+                      borderSide: BorderSide(color: kMainColour, width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2.0),
+                      borderSide: BorderSide(color: kMainColour, width: 2.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                   ),
@@ -129,13 +134,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 SizedBox(
                   height: 8.0,
                 ),
-                TextField(
+                TextFormField(
                   //obscure text is what makes passwords look like passwords
                   obscureText: true,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.black),
                   onChanged: (value) {
                     password = value; //Do something with the user input.
+                  },
+                  validator: (password) {
+                    if (password == null || password.isEmpty) {
+                      return 'Please enter a password';
+                    } else {
+                      return null;
+                    }
                   },
                   decoration: InputDecoration(
                     //TODO: Managing password to match the reentered one
@@ -147,13 +159,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 1.0),
+                      borderSide: BorderSide(color: kMainColour, width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: Colors.blueAccent, width: 2.0),
+                      borderSide: BorderSide(color: kMainColour, width: 2.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                   ),
@@ -161,13 +171,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 SizedBox(
                   height: 8.0,
                 ),
-                TextField(
+                TextFormField(
                   //obscure text is what makes passwords look like passwords
                   obscureText: true,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.black),
                   onChanged: (value) {
                     cPassword = value; //Do something with the user input.
+                  },
+                  validator: (cPassword) {
+                    if (cPassword == null || cPassword.isEmpty) {
+                      return 'Please enter a password';
+                    } else if (cPassword != password) {
+                      return 'The passwords do not much, please try again';
+                    } else {
+                      return null;
+                    }
                   },
                   decoration: InputDecoration(
                     hintText: 'Repeat the password entered',
@@ -178,13 +197,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color:kMainColour, width: 1.0),
+                      borderSide: BorderSide(color: kMainColour, width: 1.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: kMainColour, width: 2.0),
+                      borderSide: BorderSide(color: kMainColour, width: 2.0),
                       borderRadius: BorderRadius.all(Radius.circular(32.0)),
                     ),
                   ),
@@ -201,80 +218,61 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     child: MaterialButton(
                       onPressed: () async {
                         if (_formKey.currentState.validate()) {
+                          //TODO: Make username a unique field and show error if duplicated
                           final QuerySnapshot result = await _firestore
                               .collection('users')
                               .where('username', isEqualTo: username)
                               .get();
                           final List<DocumentSnapshot> documents = result.docs;
-                          if (documents.length != 0) {
-                            print('username exists');
-                            setState(() {
-                              Text(
-                                  'The Username is taken.Please enter a new username',
-                                  style: kErrorTextStyle);
-                            });
+                          available = documents.length;
+                          if (available > 0) {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(' Username is already taken'),
+                                content: Text(
+                                    'Usernames need to be unique. Please enter another username'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(ctx).pop();
+                                    },
+                                    child: Text('Okay'),
+                                  )
+                                ],
+                              ),
+                            );
                           } else {
-                            final QuerySnapshot emailresult = await _firestore
-                                .collection('users')
-                                .where('email', isEqualTo: email)
-                                .get();
-                            final List<DocumentSnapshot> emaildocuments =
-                                emailresult.docs;
-                            if (emaildocuments.length == 0) {
-                              if (password == cPassword) {
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: Text(' Registration Failed'),
-                                    content: Text('The passwords entered do not much \n Please enter the passwords again'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(ctx).pop();
-                                        },
-                                        child: Text('Okay'),
-                                      )
-                                    ],
-                                  ),
-                                );
-                                //TODO: Make username a unique field and show error if duplicated
-                                try {
-                                  _firestore.collection('users').add({
-                                    'email': email,
-                                    'username': username,
-                                    'status': status,
-                                  });
-                                  final newUser = await _auth
-                                      .createUserWithEmailAndPassword(
-                                          email: email, password: password);
-                                  if (newUser != null) {
-                                    showSpinner = false;
-                                    Navigator.pushNamed(context, MainScreen.id);
-                                  }
-                                } on FirebaseAuthException catch (e) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text(' Ops! Registration Failed'),
-                                      content: Text('${e.message}'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(ctx).pop();
-                                          },
-                                          child: Text('Okay'),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                }
-                              }
-                            } else {
-                              setState(() {
-                                Text(
-                                    'The Username is taken.Please enter a new username',
-                                    style: kErrorTextStyle);
+                            try {
+                              _firestore.collection('users').add({
+                                'email': email,
+                                'username': username,
+                                'status': status,
+                                'location': GeoPoint(0, 0),
                               });
+                              final newUser =
+                                  await _auth.createUserWithEmailAndPassword(
+                                      email: email, password: password);
+                              if (newUser != null) {
+                                showSpinner = false;
+                                Navigator.pushNamed(context, MainScreen.id);
+                              }
+                            } on FirebaseAuthException catch (e) {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(' Ops! Registration Failed'),
+                                  content: Text('${e.message}'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                      },
+                                      child: Text('Okay'),
+                                    )
+                                  ],
+                                ),
+                              );
                             }
                           }
                         }

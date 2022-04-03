@@ -22,6 +22,7 @@ dependencies:
   firebase_database: ^9.0.7
   http: ^0.13.4
   google_maps_flutter: ^2.1.1
+  pin_code_fields: ^7.3.0
   location: ^4.3.0
   provider: ^6.0.2
   geolocator: ^8.0.0

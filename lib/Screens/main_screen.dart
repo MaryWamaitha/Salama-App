@@ -28,11 +28,14 @@ class _MainScreenState extends State<MainScreen> {
   Position _location;
   int selectedPage = 0;
   String username;
+  List<Map> Members = [];
   LatLng userLocation;
   String status;
   String docuID;
+  String groupID;
   Set<Marker> _markers = Set<Marker>();
   final _auth = FirebaseAuth.instance;
+
   //the text controller helps us in managing the text field eg clearing it when the send button is clicked
   final messageTextController = TextEditingController();
   String email;
@@ -72,13 +75,27 @@ class _MainScreenState extends State<MainScreen> {
 
     final _locationData = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
-    setState(()  {
+    setState(() {
       _location = _locationData;
     });
     if (status == 'active') {
       // if a user is acrive, save their location to database anytime it is changed
       await _firestore.collection("users").doc(docuID).update({
         'location': GeoPoint(_location.latitude, _location.longitude),
+      });
+      StreamSubscription<Position> positionStream =
+          Geolocator.getPositionStream(locationSettings: locationSettings)
+              .listen((Position position) {
+        setState(() {
+          // markers[MarkerId('user')] = marker;
+          userLocation = LatLng(position.latitude, position.longitude);
+        });
+        if (status == 'active') {
+          // if a user is active, save their location to database anytime it is changed
+          _firestore.collection("users").doc(docuID).update({
+            'location': GeoPoint(userLocation.latitude, userLocation.longitude),
+          });
+        }
       });
     }
   }
@@ -92,6 +109,7 @@ class _MainScreenState extends State<MainScreen> {
   // final Set<Marker> _markers = {};
 
   void _onMapCreated(GoogleMapController _cntlr) async {
+    getGroupMembers;
     getUserLocation();
     _controller = _cntlr;
     _controller.animateCamera(
@@ -125,14 +143,24 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
-      _markers.removeWhere((m) => m.markerId.value == 'First user');
+      _markers.removeWhere((m) => m.markerId.value == '$username');
       _markers.add(Marker(
-        markerId: MarkerId('First user'),
+        markerId: MarkerId('$username'),
         position: LatLng(position.latitude, position.longitude),
         infoWindow: InfoWindow(
           title: '$username',
         ),
       ));
+      for (Map member in Members) {
+        _markers.removeWhere((m) => m.markerId.value == member['username']);
+        _markers.add(Marker(
+          markerId: MarkerId(member['username']),
+          position: member['location'],
+          infoWindow: InfoWindow(
+            title: member['username'],
+          ),
+        ));
+      }
     });
   }
 
@@ -162,10 +190,72 @@ class _MainScreenState extends State<MainScreen> {
             status = x['status'];
           });
         }
+        getGroupMembers();
       }
     } catch (e) {
       print(e);
     }
+  }
+
+  void getGroupMembers() async {
+    //once a user is registered or logged in then this current user will have  a variable
+    //the current user will be null if nobody is signed in
+    try {
+      final QuerySnapshot activity = await _firestore
+          .collection('active_members')
+          .where('username', isEqualTo: username)
+          .get();
+      final List<DocumentSnapshot> selected = activity.docs;
+      //TODO: What happens if invite does not exist
+      if (selected.length > 0) {
+        var x = selected[0].data() as Map;
+        //setting the username, docuID and status to the values gotten from the database
+        setState(() {
+          groupID = x['gid'];
+        });
+      }
+      final QuerySnapshot members = await _firestore
+          .collection('active_members')
+          .where('gid', isEqualTo: groupID)
+          .get();
+      final List<DocumentSnapshot> found = members.docs;
+      //TODO: What happens if invite does not exist
+      var i = 0;
+      int lengthy = found.length;
+      while (i < lengthy) {
+        var member = found[i].data() as Map;
+        print(' member is $member');
+        var memberUname = member['username'];
+        final QuerySnapshot membersDets = await _firestore
+            .collection('users')
+            .where('username', isEqualTo: memberUname)
+            .get();
+        final List<DocumentSnapshot> locDets = membersDets.docs;
+        var details = new Map();
+        var result = locDets[0];
+        final returned = result.data() as Map;
+        print(' member is $returned');
+        LatLng destination = LatLng(
+            returned['location'].latitude, returned['location'].longitude);
+        details['username'] = returned['username'];
+        print(details['username']);
+        details['location'] = destination;
+        setState(() {
+          Members.add(details);
+        });
+        print('Members are $Members');
+
+        ++i;
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void trackingMembers() {
+    Timer.periodic(Duration(seconds: 10), (timer) async {
+      getGroupMembers();
+    });
   }
 
   //this initiliazes the get user method when screen is started
@@ -174,6 +264,7 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     getCurrentUser();
     getUserLocation();
+    trackingMembers();
   }
 
   //this method returns a future
@@ -214,7 +305,7 @@ class _MainScreenState extends State<MainScreen> {
                         initialCameraPosition: CameraPosition(
                           target:
                               LatLng(_location.latitude, _location.longitude),
-                          zoom: 12.0,
+                          // zoom: 15.0,
                         ),
                         markers: _markers,
                         mapType: MapType.normal,

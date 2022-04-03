@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:salama/Screens/create_pin.dart';
 import 'main_screen.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import '../constants.dart';
@@ -45,7 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
             )),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10.0,40,10,10),
+            padding: const EdgeInsets.fromLTRB(10.0, 40, 10, 10),
             child: Column(
               children: [
                 settingsItems(
@@ -54,11 +55,15 @@ class _SettingsPageState extends State<SettingsPage> {
                       'Edit your emergency contacts, add new ones \n or delete existing ones here',
                   page: EmergencyContact.id,
                 ),
-                SizedBox(height: 60,),
+                SizedBox(
+                  height: 60,
+                ),
                 settingsItems(
-                    mainText: 'Security Code',
-                    explanation:
-                        'Set your security code which you can use to let \n people tracking you know you are safe'),
+                  mainText: 'Security Code',
+                  explanation:
+                      'Set your security code which you can use to let \n people tracking you know you are safe',
+                  page: CreatePin.id,
+                ),
               ],
             ),
           ),

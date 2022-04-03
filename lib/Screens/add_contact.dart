@@ -19,7 +19,8 @@ const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
 const ktextFieldPadding = const EdgeInsets.fromLTRB(60.0, 20, 60, 20);
 
 class AddContact extends StatefulWidget {
-  static String id = 'create_group_screen';
+  static String id = 'add_contact';
+
   @override
   _AddContactState createState() => _AddContactState();
 }

@@ -35,7 +35,9 @@ class _MovingState extends State<Moving> {
   String user;
   String place;
   String userID;
+  String docID;
   User loggedInUser;
+  bool notValid = true;
   Position _location;
   String name;
   LatLng destination;
@@ -52,7 +54,7 @@ class _MovingState extends State<Moving> {
   List<double> Distance = [1, 1.5, 2, 3, 4, 5];
   double distance = 1.5;
   String ETAInfo = '';
-  String status ;
+  String status;
   bool inviteSent = true;
   List<Map> Contacts = [];
   List<String> contactNames = [];
@@ -166,8 +168,18 @@ class _MovingState extends State<Moving> {
           userID = selected[0].id;
           creator = x['username'];
           status = x['status'];
-
         });
+        final QuerySnapshot moving = await _firestore
+            .collection('moving_mode')
+            .where('userID', isEqualTo: userID)
+            .get();
+        final List<DocumentSnapshot> isMoving = moving.docs;
+        //this means that the user is already in active mode
+        if (isMoving.length > 0) {
+          setState(() {
+            notValid = false;
+          });
+        }
         getContacts();
       }
     } catch (e) {
@@ -193,9 +205,9 @@ class _MovingState extends State<Moving> {
         latitude = destination.latitude;
         longi = destination.longitude;
         print('the destination is $destination');
-        getUserLocation();
-        getDistanceMatrix();
       });
+      getUserLocation();
+      getDistanceMatrix();
     }
   }
 
@@ -250,238 +262,308 @@ class _MovingState extends State<Moving> {
           backgroundColor: kMainColour,
         ),
       ),
-      body:
-      status == 'inactive' ?
-      SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 10.0),
-              Container(
-                margin: EdgeInsets.only(top: 5),
-                decoration: BoxDecoration(
-                    color: kPageColour,
-                    borderRadius: new BorderRadius.only(
-                      topLeft: const Radius.circular(30.0),
-                      topRight: const Radius.circular(30.0),
-                    )),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Where are you going to today ?',
-                        style: TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Your contacts will be notified if you do not arrive here \n in the estimate time shown below',
-                        style: TextStyle(
-                          fontSize: 13.0,
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(right: 10, bottom: 10),
-                        child: Container(
-                          height: 45.0,
-                          child: TextButton(
-                            child: Container(
-                              height: 40.0,
-                              width: 250.0,
-                              color: Colors.amberAccent,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Press here to select location',
-                                    style: TextStyle(color: Colors.black),
-                                  ),
-                                  Icon(
-                                    Icons.location_on,
-                                    color: Colors.lightBlue,
-                                  ),
-                                ],
+      body: notValid == true
+          ? SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 10.0),
+                    Container(
+                      margin: EdgeInsets.only(top: 5),
+                      decoration: BoxDecoration(
+                          color: kPageColour,
+                          borderRadius: new BorderRadius.only(
+                            topLeft: const Radius.circular(30.0),
+                            topRight: const Radius.circular(30.0),
+                          )),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Where are you going to today ?',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            onPressed: () async {
-                              _handlePressButton();
-                            },
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'Destination: ',
-                            style: kMajorHeadings,
-                          ),
-                          place != null
-                              ? Text(
-                                  '$place',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                  ),
-                                )
-                              : Text('')
-                        ],
-                      ),
-                      divider,
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Estimated time of Arrival',
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.w700,
+                            Text(
+                              'Your contacts will be notified if you do not arrive here \n in the estimate time shown below',
+                              style: TextStyle(
+                                fontSize: 13.0,
+                              ),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                 ETADetails=
-                                    'This is how long our current calculations indicate it will take to \n to get to the destination. Please  note that traffic conditions may \n cause affect this and if you are safe just taking longer \n than expected, you will be asked to enter a pin';
-                              });
-
-                            },
-                            icon: Icon(Icons.arrow_downward),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                ETADetails = '';
-                              });
-                            },
-                            icon: Icon(Icons.arrow_upward),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '$ETADetails',
-                        style: TextStyle(
-                          fontSize: 13.0,
+                            Padding(
+                              padding: EdgeInsets.only(right: 10, bottom: 10),
+                              child: Container(
+                                height: 45.0,
+                                child: TextButton(
+                                  child: Container(
+                                    height: 40.0,
+                                    width: 250.0,
+                                    color: Colors.amberAccent,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Press here to select location',
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                        Icon(
+                                          Icons.location_on,
+                                          color: Colors.lightBlue,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  onPressed: () async {
+                                    _handlePressButton();
+                                  },
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Destination: ',
+                                  style: kMajorHeadings,
+                                ),
+                                place != null
+                                    ? Text(
+                                        '$place',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                        ),
+                                      )
+                                    : Text('')
+                              ],
+                            ),
+                            divider,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Estimated time of Arrival',
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      ETADetails =
+                                          'This is how long our current calculations indicate it will take to \n to get to the destination. Please  note that traffic conditions may \n cause affect this and if you are safe just taking longer \n than expected, you will be asked to enter a pin';
+                                    });
+                                  },
+                                  icon: Icon(Icons.arrow_downward),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      ETADetails = '';
+                                    });
+                                  },
+                                  icon: Icon(Icons.arrow_upward),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              '$ETADetails',
+                              style: TextStyle(
+                                fontSize: 13.0,
+                              ),
+                            ),
+                            Text(
+                              'Estimated duration is $ETAInfo',
+                              style: TextStyle(
+                                fontSize: 14.0,
+                              ),
+                            ),
+                            divider,
+                            for (Map contact in Contacts)
+                              Contacts != null
+                                  ? CheckboxGroup(
+                                      labels: <String>[contact['name']],
+                                      onSelected: (List<String> checked) {
+                                        if (Contacts.length > 3) {
+                                          showDialog(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title:
+                                                  Text('Maximum of 3 Contacts'),
+                                              content: Text(
+                                                  'You can only add up to 3 contacts to be notified. \n Please unselect one to select another one'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(ctx).pop();
+                                                  },
+                                                  child: Text('Okay'),
+                                                )
+                                              ],
+                                            ),
+                                          );
+                                        } else {
+                                          if (checked != null) {
+                                            selectedContacts
+                                                .add(contact['docID']);
+                                            contactNames.add(contact['name']);
+                                            print(checked.toString());
+                                            print(selectedContacts);
+                                          }
+                                        }
+                                      })
+                                  : Text(
+                                      'You dont have any emergency contacts, pleaese add some \n in the settings page'),
+                          ],
                         ),
                       ),
-
-                      Text(
-                        'Estimated duration is $ETAInfo',
-                        style: TextStyle(
-                          fontSize: 14.0,
-                        ),
-                      ),
-                      divider,
-                      for (Map contact in Contacts)
-                        Contacts != null
-                            ? CheckboxGroup(
-                                labels: <String>[contact['name']],
-                                onSelected: (List<String> checked) {
-                                  if (Contacts.length > 3) {
-                                    showDialog(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: Text('Maximum of 3 Contacts'),
-                                        content: Text(
-                                            'You can only add up to 3 contacts to be notified. \n Please unselect one to select another one'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(ctx).pop();
-                                            },
-                                            child: Text('Okay'),
-                                          )
-                                        ],
-                                      ),
-                                    );
-                                  } else {
-                                    if (checked != null) {
-                                      selectedContacts.add(contact['docID']);
-                                      contactNames.add(contact['name']);
-                                      print(checked.toString());
-                                      print(selectedContacts);
-                                    }
-                                  }
-                                })
-                            : Text('You dont have any emergency contacts, pleaese add some \n in the settings page'),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                child: Center(
-                  child: TextButton(
-                    onPressed: () async {
-                      try {
-                        var contacts = selectedContacts.toSet().toList();
-                        var durationInMinutes = timeInSeconds / 60;
-                        var docRef =
-                            await _firestore.collection('moving_mode').add({
-                          'selectedContacts': contacts,
-                          'destination': place,
-                          'duration': durationInMinutes,
-                          'destCoordinates': GeoPoint(latitude, longi),
-                          'userID': userID,
-                        });
-                        await _firestore
-                            .collection("users")
-                            .doc(userID)
-                            .update({
-                          'status': 'active',
-                        });
-                        var now = DateTime.now();
-                        var formatterTime = DateFormat('kk:mm');
-                        String actualTime = formatterTime.format(now);
-                        Navigator.pushNamed(context, MovingActive.id,
-                            arguments: {"time": ETAInfo, "destination": place, "list": contactNames, "timeActivated": actualTime,});
-                      } catch (e) {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text(' Ops! Moving mode activation failed'),
-                            content: Text('${e.message}'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(ctx).pop();
-                                },
-                                child: Text('Okay'),
-                              )
-                            ],
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: Colors.amberAccent,
-                          borderRadius: new BorderRadius.all(
-                            const Radius.circular(30.0),
-                          )),
-                      height: 50,
-                      width: 150.00,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                       child: Center(
-                        child: Text(
-                          'Activate',
-                          style: TextStyle(
-                            color: Colors.black,
+                        child: TextButton(
+                          onPressed: () async {
+                            try {
+                              var contacts = selectedContacts.toSet().toList();
+                              var durationInMinutes = timeInSeconds / 60;
+                              contactNames = contactNames.toSet().toList();
+                              var docRef = await _firestore
+                                  .collection('moving_mode')
+                                  .add({
+                                'selectedContacts': contacts,
+                                'destination': place,
+                                'duration': durationInMinutes,
+                                'destCoordinates': GeoPoint(latitude, longi),
+                                'userID': userID,
+                              });
+                              setState(() {
+                                docID = docRef.id;
+                              });
+                              await _firestore
+                                  .collection("users")
+                                  .doc(userID)
+                                  .update({
+                                'status': 'active',
+                              });
+                              var now = DateTime.now();
+                              var formatterTime = DateFormat('kk:mm');
+                              String actualTime = formatterTime.format(now);
+                              Navigator.pushNamed(context, MovingActive.id,
+                                  arguments: {
+                                    "time": ETAInfo,
+                                    "destination": place,
+                                    "list": contactNames,
+                                    "timeActivated": actualTime,
+                                    "userID": userID,
+                                    "docID": docID,
+                                  });
+                            } catch (e) {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(
+                                      ' Ops! Moving mode activation failed'),
+                                  content: Text('${e.message}'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                      },
+                                      child: Text('Okay'),
+                                    )
+                                  ],
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.amberAccent,
+                                borderRadius: new BorderRadius.all(
+                                  const Radius.circular(30.0),
+                                )),
+                            height: 50,
+                            width: 150.00,
+                            child: Center(
+                              child: Text(
+                                'Activate',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                    Menu(),
+                  ],
                 ),
               ),
-              Menu(),
-            ],
-          ),
-        ),
-      ) :
-          //TODO: Design the text for you are already active to be more aesthetically please
-      Container ( child: Text (' You are already active ')),
+            )
+          : //TODO: Design the text for you are already active to be more aesthetically please
+          SafeArea(
+              child: Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 100, 20, 100),
+                      child: Column(
+                        children: [
+                          Text(
+                              ' You are already being tracked, \n view status by clicking this button'),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.amberAccent,
+                                  borderRadius: new BorderRadius.all(
+                                    const Radius.circular(30.0),
+                                  )),
+                              height: 50,
+                              width: 150.00,
+                              child: Center(
+                                child: TextButton(
+                                  onPressed: () {
+                                    var now = DateTime.now();
+                                    var formatterTime = DateFormat('kk:mm');
+                                    String actualTime =
+                                        formatterTime.format(now);
+                                    Navigator.pushNamed(
+                                        context, MovingActive.id,
+                                        arguments: {
+                                          "time": ETAInfo,
+                                          "destination": place,
+                                          "list": contactNames,
+                                          "timeActivated": actualTime,
+                                          "userID": userID,
+                                          "docID": docID,
+                                        });
+                                  },
+                                  child: Text(
+                                    'View ',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Menu(),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
