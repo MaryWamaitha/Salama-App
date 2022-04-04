@@ -282,7 +282,8 @@ class _InviteState extends State<Invite> {
                                               .add({
                                             'username': username,
                                             'isSafe': true,
-                                            'gid': gid
+                                            'gid': gid,
+                                            'tracking': false,
                                           });
                                           await _firestore
                                               .collection("users")

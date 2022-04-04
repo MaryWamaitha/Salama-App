@@ -17,7 +17,8 @@ import 'settings.dart';
 import 'login_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  static String id = 'chat_screen';
+  static String id = 'main_screen';
+
   @override
   _MainScreenState createState() => _MainScreenState();
 }
@@ -201,17 +202,19 @@ class _MainScreenState extends State<MainScreen> {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
+      //Todo: Add a condition here of what happens if the group ID is null
       final QuerySnapshot activity = await _firestore
           .collection('active_members')
           .where('username', isEqualTo: username)
           .get();
       final List<DocumentSnapshot> selected = activity.docs;
-      //TODO: What happens if invite does not exist
+
       if (selected.length > 0) {
         var x = selected[0].data() as Map;
         //setting the username, docuID and status to the values gotten from the database
         setState(() {
           groupID = x['gid'];
+          print('the group ID is $groupID');
         });
       }
       final QuerySnapshot members = await _firestore
@@ -252,6 +255,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  //TODO: find why the location is updating for all users instead of the logged in user only
   void trackingMembers() {
     Timer.periodic(Duration(seconds: 10), (timer) async {
       getGroupMembers();

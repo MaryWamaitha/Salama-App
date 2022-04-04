@@ -68,9 +68,9 @@ class _ActiveGroupState extends State<ActiveGroup> {
           });
 
           print('username is $username');
+          print('userID is $userID');
           print('status is $status');
           print('initial location is $userLocation');
-          getGroupDetails();
           getUserLocation();
         }
       }
@@ -102,6 +102,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
           var x = selected[0].data() as Map;
 
           setState(() {
+            userID = selected[0].id;
             userLocation =
                 LatLng(x['location'].latitude, x['location'].longitude);
             userLatitude = x['location'].latitude;
@@ -124,12 +125,14 @@ class _ActiveGroupState extends State<ActiveGroup> {
         .get();
     final List<DocumentSnapshot> selected = user.docs;
     var result = selected[0].data() as Map;
-    activeID = selected[0].id;
+
     print('Group details are $result');
     setState(() {
       groupID = result['gid'];
       tracking = result['tracking'];
       sender = result['sender'];
+      activeID = selected[0].id;
+      print('the active ID is $activeID');
     });
     //using the GID to get group details
     FirebaseFirestore.instance
@@ -156,7 +159,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //every minute, check if the user has arrived at location
   //once the activity is set to true, this timer stops working
   void activateTimer() {
-    getGroupDetails();
     print(' the use is beibg tracked $tracking');
     if (tracking == false) {
       Timer.periodic(Duration(seconds: 60), (timer) async {
@@ -245,6 +247,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   void initState() {
     super.initState();
     getUserDetails();
+    getGroupDetails();
     activateTimer();
     startLocating();
   }
@@ -267,7 +270,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                 child: Padding(
                   padding: EdgeInsets.only(top: 50.0, bottom: 10),
                   child: Text(
-                    'ACTIVE GROUPS',
+                    'ACTIVE GROUP',
                     style: TextStyle(
                       fontSize: 25,
                     ),
@@ -292,6 +295,8 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       MembersStream(),
                       TextButton(
                         onPressed: () async {
+                          print("what is going on for $userID");
+                          //TODo: Add pin interface before removing user
                           await _firestore
                               .collection("active_members")
                               .doc(activeID)

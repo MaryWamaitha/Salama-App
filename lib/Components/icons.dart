@@ -83,7 +83,7 @@ class Menu extends StatelessWidget {
             MenuItem(
               icon: Icons.settings,
               label: 'Settings',
-              page: CreateGroup.id,
+              page: SettingsPage.id,
             ),
           ],
         ),

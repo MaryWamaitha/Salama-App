@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'main_screen.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import '../constants.dart';
+import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   static String id = 'login_screen';
@@ -155,6 +156,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, RegistrationScreen.id);
+                  },
+                  child: Text('Not a user, register here'))
               // Padding(
               //   padding: EdgeInsets.symmetric(vertical: 16.0),
               //   child: Material(

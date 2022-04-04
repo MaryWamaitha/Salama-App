@@ -454,7 +454,7 @@ class _CreateGroupState extends State<CreateGroup> {
                               ),
                             ],
                           ),
-                        ),
+                        ), //)[[
                       ),
                       divider,
                       Row(
@@ -590,6 +590,7 @@ class _CreateGroupState extends State<CreateGroup> {
                           'Destination': place,
                         });
                         var documentId = docRef.id;
+                        print('document ID is $documentId');
                         await _firestore.collection('active_members').add({
                           'username': creator,
                           'isSafe': true,
