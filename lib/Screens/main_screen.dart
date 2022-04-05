@@ -217,38 +217,40 @@ class _MainScreenState extends State<MainScreen> {
           print('the group ID is $groupID');
         });
       }
-      final QuerySnapshot members = await _firestore
-          .collection('active_members')
-          .where('gid', isEqualTo: groupID)
-          .get();
-      final List<DocumentSnapshot> found = members.docs;
-      //TODO: What happens if invite does not exist
-      var i = 0;
-      int lengthy = found.length;
-      while (i < lengthy) {
-        var member = found[i].data() as Map;
-        print(' member is $member');
-        var memberUname = member['username'];
-        final QuerySnapshot membersDets = await _firestore
-            .collection('users')
-            .where('username', isEqualTo: memberUname)
+      if (groupID != null) {
+        final QuerySnapshot members = await _firestore
+            .collection('active_members')
+            .where('gid', isEqualTo: groupID)
             .get();
-        final List<DocumentSnapshot> locDets = membersDets.docs;
-        var details = new Map();
-        var result = locDets[0];
-        final returned = result.data() as Map;
-        print(' member is $returned');
-        LatLng destination = LatLng(
-            returned['location'].latitude, returned['location'].longitude);
-        details['username'] = returned['username'];
-        print(details['username']);
-        details['location'] = destination;
-        setState(() {
-          Members.add(details);
-        });
-        print('Members are $Members');
+        final List<DocumentSnapshot> found = members.docs;
+        //TODO: What happens if invite does not exist
+        var i = 0;
+        int lengthy = found.length;
+        while (i < lengthy) {
+          var member = found[i].data() as Map;
+          print(' member is $member');
+          var memberUname = member['username'];
+          final QuerySnapshot membersDets = await _firestore
+              .collection('users')
+              .where('username', isEqualTo: memberUname)
+              .get();
+          final List<DocumentSnapshot> locDets = membersDets.docs;
+          var details = new Map();
+          var result = locDets[0];
+          final returned = result.data() as Map;
+          print(' member is $returned');
+          LatLng destination = LatLng(
+              returned['location'].latitude, returned['location'].longitude);
+          details['username'] = returned['username'];
+          print(details['username']);
+          details['location'] = destination;
+          setState(() {
+            Members.add(details);
+          });
+          print('Members are $Members');
 
-        ++i;
+          ++i;
+        }
       }
     } catch (e) {
       print(e);
