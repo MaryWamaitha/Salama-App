@@ -17,6 +17,7 @@ String leaveGroup = '                         ';
 User loggedInUser;
 int minApprovals;
 int safeTaps;
+bool tapped = false;
 
 class ActiveGroup extends StatefulWidget {
   static String id = 'active_group_screen';
@@ -437,34 +438,54 @@ class MemberStatus extends StatelessWidget {
           isMe == false && isSafe == false
               ? TextButton(
                   onPressed: () async {
-                    safeTaps = safeTaps + 1;
-                    if (safeTaps >= minApprovals) {
-                      print(' safe Taps is true');
-                      await _firestore
-                          .collection("active_members")
-                          .doc(memberID)
-                          .update({
-                        'isSafe': true,
-                      });
-                      await _firestore
-                          .collection("groups")
-                          .doc(groupID)
-                          .update({
-                        'safeTaps': safeTaps,
-                      });
+                    if (tapped == false) {
+                      safeTaps = safeTaps + 1;
+                      tapped = true;
+                      if (safeTaps >= minApprovals) {
+                        print(' safe Taps is true');
+                        await _firestore
+                            .collection("active_members")
+                            .doc(memberID)
+                            .update({
+                          'isSafe': true,
+                        });
+                        await _firestore
+                            .collection("groups")
+                            .doc(groupID)
+                            .update({
+                          'safeTaps': safeTaps,
+                        });
+                      } else {
+                        await _firestore
+                            .collection("groups")
+                            .doc(groupID)
+                            .update({
+                          'safeTaps': safeTaps,
+                        });
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(' Safety Alert'),
+                            content: Text(
+                                'Please note that another member is required to click \n this for the user to be marked as safe'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                },
+                                child: Text('Okay'),
+                              )
+                            ],
+                          ),
+                        );
+                      }
                     } else {
-                      await _firestore
-                          .collection("groups")
-                          .doc(groupID)
-                          .update({
-                        'safeTaps': safeTaps,
-                      });
                       showDialog(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          title: Text(' Safety Alert'),
+                          title: Text(' Already clicked'),
                           content: Text(
-                              'Please note that another member is required to click \n this for the user to be marked as safe'),
+                              'Please note that you have already clicked the button and cant click again'),
                           actions: [
                             TextButton(
                               onPressed: () {

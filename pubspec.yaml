@@ -31,8 +31,10 @@ dependencies:
   uuid: ^2.0.4
   flutter_google_places: ^0.3.0
   flutter_spinkit: ^5.1.0
+  firebase_messaging: ^11.2.12
+  overlay_support: ^1.2.1
   google_maps_webservice: ^0.0.19
-#  flutter_google_places_hoc081098: ^1.0.0-nullsafety.5
+  #  flutter_google_places_hoc081098: ^1.0.0-nullsafety.5
   google_api_headers: ^1.1.1
   rxdart: ^0.26.0
   geocoding: ^2.0.4
