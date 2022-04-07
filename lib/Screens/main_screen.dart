@@ -84,20 +84,6 @@ class _MainScreenState extends State<MainScreen> {
       await _firestore.collection("users").doc(docuID).update({
         'location': GeoPoint(_location.latitude, _location.longitude),
       });
-      StreamSubscription<Position> positionStream =
-          Geolocator.getPositionStream(locationSettings: locationSettings)
-              .listen((Position position) {
-        setState(() {
-          // markers[MarkerId('user')] = marker;
-          userLocation = LatLng(position.latitude, position.longitude);
-        });
-        if (status == 'active') {
-          // if a user is active, save their location to database anytime it is changed
-          _firestore.collection("users").doc(docuID).update({
-            'location': GeoPoint(userLocation.latitude, userLocation.longitude),
-          });
-        }
-      });
     }
   }
 
@@ -203,6 +189,7 @@ class _MainScreenState extends State<MainScreen> {
     //the current user will be null if nobody is signed in
     try {
       //Todo: Add a condition here of what happens if the group ID is null
+
       final QuerySnapshot activity = await _firestore
           .collection('active_members')
           .where('username', isEqualTo: username)
@@ -217,7 +204,7 @@ class _MainScreenState extends State<MainScreen> {
           print('the group ID is $groupID');
         });
       }
-      if (groupID != null) {
+      if (groupID != null || groupID != '') {
         final QuerySnapshot members = await _firestore
             .collection('active_members')
             .where('gid', isEqualTo: groupID)
