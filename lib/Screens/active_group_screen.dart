@@ -15,9 +15,12 @@ String username;
 String groupID;
 String leaveGroup = '                         ';
 User loggedInUser;
+int minApprovals;
+int safeTaps;
 
 class ActiveGroup extends StatefulWidget {
   static String id = 'active_group_screen';
+
   @override
   _ActiveGroupState createState() => _ActiveGroupState();
 }
@@ -28,6 +31,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   bool showSpinner = false;
   String userID;
   String groupName;
+
   LatLng destination;
   LatLng userLocation;
   double userLatitude;
@@ -67,10 +71,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
             userLongitude = x['location'].longitude;
           });
 
-          print('username is $username');
-          print('userID is $userID');
-          print('status is $status');
-          print('initial location is $userLocation');
+          // print('username is $username');
+          // print('userID is $userID');
+          // print('status is $status');
+          // print('initial location is $userLocation');
           getUserLocation();
         }
       }
@@ -108,7 +112,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
             userLatitude = x['location'].latitude;
             userLongitude = x['location'].longitude;
           });
-          print(' the location evben  when changed ois $userLocation');
+          // print(' the location evben  when changed ois $userLocation');
         }
       }
     } catch (e) {
@@ -132,7 +136,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
       tracking = result['tracking'];
       sender = result['sender'];
       activeID = selected[0].id;
-      print('the active ID is $activeID');
+      // print('the active ID is $activeID');
     });
     //using the GID to get group details
     FirebaseFirestore.instance
@@ -144,12 +148,12 @@ class _ActiveGroupState extends State<ActiveGroup> {
         final details = documentSnapshot.data() as Map;
         setState(() {
           groupName = details['Name'];
-          Distance = details['Distance'];
+          Distance = details['Distance'] * 1000;
+          safeTaps = details['safeTaps'];
           groupLatitude = details['Location'].latitude;
           groupLongitude = details['Location'].longitude;
           destination = LatLng(
               details['Location'].latitude, details['Location'].longitude);
-          print(' destination is $destination');
         });
       }
     });
@@ -159,7 +163,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //every minute, check if the user has arrived at location
   //once the activity is set to true, this timer stops working
   void activateTimer() {
-    print(' the use is beibg tracked $tracking');
+    // print(' the use is beibg tracked $tracking');
     if (tracking == false) {
       Timer.periodic(Duration(seconds: 60), (timer) async {
         var value = initializeTracking(
@@ -190,13 +194,14 @@ class _ActiveGroupState extends State<ActiveGroup> {
         cos((lat2 - lat1) * p) / 2 +
         cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
     double distance = 12742 * asin(sqrt(a));
-    if (distance < 2) {
+    distance = distance * 1000;
+    if (distance < 1000) {
       active = true;
     } else {
       active = false;
     }
-    print('activity is $active');
-    print('distance is $distance');
+    // print('activity is $active');
+    // print('distance is $distance');
     return active;
   }
 
@@ -229,6 +234,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
         cos((lat2 - lat1) * p) / 2 +
         cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
     double distance = 12742 * asin(sqrt(a));
+    distance = distance * 1000;
     if (distance > Distance) {
       setState(() {
         isSafe = false;
@@ -238,8 +244,8 @@ class _ActiveGroupState extends State<ActiveGroup> {
         isSafe = true;
       });
     }
-    print('user isSafe is $isSafe');
-    print('distance is $distance');
+    // print('user isSafe is $isSafe');
+    // print('distance is $distance');
     return isSafe;
   }
 
@@ -355,17 +361,24 @@ class MembersStream extends StatelessWidget {
           );
         }
         final members = snapshot.data.docs.reversed;
+        var number = members.length;
+        if (number > 2) {
+          minApprovals = 2;
+        } else {
+          minApprovals = 2;
+        }
+
         List<MemberStatus> MembersStatuses = [];
         for (var member in members) {
           final memberUname = member['username'];
           final memberSafety = member['isSafe'];
-
-          final currentUser = loggedInUser.email;
+          final memberID = member.id;
 
           final memberStatus = MemberStatus(
             member: memberUname,
             isSafe: memberSafety,
             isMe: username == memberUname,
+            memberID: memberID,
           );
 
           MembersStatuses.add(memberStatus);
@@ -382,8 +395,9 @@ class MembersStream extends StatelessWidget {
 }
 
 class MemberStatus extends StatelessWidget {
-  MemberStatus({this.member, this.isSafe, this.isMe});
+  MemberStatus({this.member, this.isSafe, this.isMe, this.memberID});
 
+  final String memberID;
   final String member;
   final bool isSafe;
   final bool isMe;
@@ -422,8 +436,46 @@ class MemberStatus extends StatelessWidget {
           // isSafe== false  ? Text('Safe(Ignore)') : Text('$leaveGroup'),
           isMe == false && isSafe == false
               ? TextButton(
-                  onPressed: () {
-                    //TODO: What happens when unsafe user is actually okay
+                  onPressed: () async {
+                    safeTaps = safeTaps + 1;
+                    if (safeTaps >= minApprovals) {
+                      print(' safe Taps is true');
+                      await _firestore
+                          .collection("active_members")
+                          .doc(memberID)
+                          .update({
+                        'isSafe': true,
+                      });
+                      await _firestore
+                          .collection("groups")
+                          .doc(groupID)
+                          .update({
+                        'safeTaps': safeTaps,
+                      });
+                    } else {
+                      await _firestore
+                          .collection("groups")
+                          .doc(groupID)
+                          .update({
+                        'safeTaps': safeTaps,
+                      });
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(' Safety Alert'),
+                          content: Text(
+                              'Please note that another member is required to click \n this for the user to be marked as safe'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                              },
+                              child: Text('Okay'),
+                            )
+                          ],
+                        ),
+                      );
+                    }
                   },
                   child: Text('Safe(Ignore)'),
                 )

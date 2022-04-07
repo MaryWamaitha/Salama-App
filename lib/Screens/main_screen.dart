@@ -111,14 +111,10 @@ class _MainScreenState extends State<MainScreen> {
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position position) {
-      setState(() {
-        // markers[MarkerId('user')] = marker;
-        userLocation = LatLng(position.latitude, position.longitude);
-      });
       if (status == 'active') {
         // if a user is active, save their location to database anytime it is changed
         _firestore.collection("users").doc(docuID).update({
-          'location': GeoPoint(userLocation.latitude, userLocation.longitude),
+          'location': GeoPoint(position.latitude, position.longitude),
         });
       }
       _controller.animateCamera(
@@ -203,40 +199,41 @@ class _MainScreenState extends State<MainScreen> {
           groupID = x['gid'];
           print('the group ID is $groupID');
         });
-      }
-      if (groupID != null || groupID != '') {
-        final QuerySnapshot members = await _firestore
-            .collection('active_members')
-            .where('gid', isEqualTo: groupID)
-            .get();
-        final List<DocumentSnapshot> found = members.docs;
-        //TODO: What happens if invite does not exist
-        var i = 0;
-        int lengthy = found.length;
-        while (i < lengthy) {
-          var member = found[i].data() as Map;
-          print(' member is $member');
-          var memberUname = member['username'];
-          final QuerySnapshot membersDets = await _firestore
-              .collection('users')
-              .where('username', isEqualTo: memberUname)
-              .get();
-          final List<DocumentSnapshot> locDets = membersDets.docs;
-          var details = new Map();
-          var result = locDets[0];
-          final returned = result.data() as Map;
-          print(' member is $returned');
-          LatLng destination = LatLng(
-              returned['location'].latitude, returned['location'].longitude);
-          details['username'] = returned['username'];
-          print(details['username']);
-          details['location'] = destination;
-          setState(() {
-            Members.add(details);
-          });
-          print('Members are $Members');
 
-          ++i;
+        if (groupID != null && groupID != '') {
+          final QuerySnapshot members = await _firestore
+              .collection('active_members')
+              .where('gid', isEqualTo: groupID)
+              .get();
+          final List<DocumentSnapshot> found = members.docs;
+          //TODO: What happens if invite does not exist
+          var i = 0;
+          int lengthy = found.length;
+          while (i < lengthy) {
+            var member = found[i].data() as Map;
+            print(' member is $member');
+            var memberUname = member['username'];
+            final QuerySnapshot membersDets = await _firestore
+                .collection('users')
+                .where('username', isEqualTo: memberUname)
+                .get();
+            final List<DocumentSnapshot> locDets = membersDets.docs;
+            var details = new Map();
+            var result = locDets[0];
+            final returned = result.data() as Map;
+            print(' member is $returned');
+            LatLng destination = LatLng(
+                returned['location'].latitude, returned['location'].longitude);
+            details['username'] = returned['username'];
+            print(details['username']);
+            details['location'] = destination;
+            setState(() {
+              Members.add(details);
+            });
+            print('Members are $Members');
+
+            ++i;
+          }
         }
       }
     } catch (e) {
@@ -251,7 +248,7 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  //this initiliazes the get user method when screen is started
+  //this initiliazes the following methods when screen is started
   @override
   void initState() {
     super.initState();
@@ -260,7 +257,6 @@ class _MainScreenState extends State<MainScreen> {
     trackingMembers();
   }
 
-  //this method returns a future
 
   @override
   Widget build(BuildContext context) {

@@ -39,14 +39,15 @@ class _CreateGroupState extends State<CreateGroup> {
   String safeWord = 'Not set';
   List<String> Users = [];
   List<String> Members = [];
-  List<double> Distance = [1, 1.5, 2, 3, 4, 5];
-  double distance = 1.5;
+  List<double> Distance = [300, 500, 700, 900, 1200, 1500, 2000, 2500];
+  double distance = 1000;
   String DistanceInfo = 'Select distance below';
   String SafeWordDetails = 'Tap the down arrow key to learn more';
   bool safety = true;
   bool inviteSent = true;
   final _controller = TextEditingController();
   final _auth = FirebaseAuth.instance;
+
   Future<void> getUsers() async {
     // Get docs from collection reference
     QuerySnapshot querySnapshot = await _firestore.collection('users').get();
@@ -447,7 +448,7 @@ class _CreateGroupState extends State<CreateGroup> {
                                 color: Colors.white70,
                               ),
                               Text(
-                                'Use system set distance of 1.5 KM',
+                                'Use system set distance of 1 KM',
                                 style: TextStyle(
                                   color: Colors.white70,
                                 ),
@@ -588,6 +589,7 @@ class _CreateGroupState extends State<CreateGroup> {
                           'SafeWord': safeWord,
                           'Location': GeoPoint(latitude, longi),
                           'Destination': place,
+                          'safeTaps': 0,
                         });
                         var documentId = docRef.id;
                         print('document ID is $documentId');
