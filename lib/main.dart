@@ -17,6 +17,7 @@ import 'Screens/emergency_contacts.dart';
 import 'Screens/settings.dart';
 import 'Screens/add_contact.dart';
 import 'Screens/moving_active.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();

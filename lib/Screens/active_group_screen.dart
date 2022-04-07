@@ -9,6 +9,10 @@ import 'package:salama/constants.dart';
 import '../Components/icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:http/http.dart';
+import 'dart:async';
+import 'dart:convert';
 
 final _firestore = FirebaseFirestore.instance;
 String username;
@@ -32,7 +36,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
   bool showSpinner = false;
   String userID;
   String groupName;
-
   LatLng destination;
   LatLng userLocation;
   double userLatitude;
@@ -44,6 +47,32 @@ class _ActiveGroupState extends State<ActiveGroup> {
   double Distance;
   String activeID;
   bool isSafe;
+  List<String> tokenIDList = ['eade7dcc-c9f4-4aa9-a4fd-7224e235a4ef'];
+
+  //sending notifications
+  void _handleSendNotification() async {
+    var deviceState = await OneSignal.shared.getDeviceState();
+
+    if (deviceState == null || deviceState.userId == null) return;
+
+    var playerId = 'eade7dcc-c9f4-4aa9-a4fd-7224e235a4ef';
+
+    var imgUrlString =
+        "http://cdn1-www.dogtime.com/assets/uploads/gallery/30-impossibly-cute-puppies/impossibly-cute-puppy-2.jpg";
+
+    var notification = OSCreateNotification(
+        playerIds: [playerId],
+        content: "this is a test from OneSignal's Flutter SDK",
+        heading: "Test Notification",
+        iosAttachments: {"id1": imgUrlString},
+        bigPicture: imgUrlString,
+        buttons: [
+          OSActionButton(text: "test1", id: "id1"),
+          OSActionButton(text: "test2", id: "id2")
+        ]);
+
+    var response = await OneSignal.shared.postNotification(notification);
+  }
 
   //uses logged in user email to get their username
   void getUserDetails() async {
@@ -71,7 +100,9 @@ class _ActiveGroupState extends State<ActiveGroup> {
             userLatitude = x['location'].latitude;
             userLongitude = x['location'].longitude;
           });
-
+          var Notifystatus = await OneSignal.shared.getDeviceState();
+          String tokenId = Notifystatus.userId;
+          print(' the token ID is $tokenId');
           // print('username is $username');
           // print('userID is $userID');
           // print('status is $status');
@@ -89,6 +120,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
     Timer.periodic(Duration(seconds: 20), (timer) async {
       getUserLocation();
     });
+  }
+
+  void configOneSignel() {
+    OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
   }
 
   //method for getting user location and updating it locally
@@ -257,6 +292,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
     getGroupDetails();
     activateTimer();
     startLocating();
+    configOneSignel();
   }
 
   @override
@@ -302,19 +338,19 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       MembersStream(),
                       TextButton(
                         onPressed: () async {
-                          print("what is going on for $userID");
-                          //TODo: Add pin interface before removing user
-                          await _firestore
-                              .collection("active_members")
-                              .doc(activeID)
-                              .delete();
-                          await _firestore
-                              .collection("users")
-                              .doc(userID)
-                              .update({
-                            'status': 'inactive',
-                          });
-                          Navigator.pushNamed(context, MainScreen.id);
+                          _handleSendNotification();
+                          // //TODo: Add pin interface before removing user
+                          // await _firestore
+                          //     .collection("active_members")
+                          //     .doc(activeID)
+                          //     .delete();
+                          // await _firestore
+                          //     .collection("users")
+                          //     .doc(userID)
+                          //     .update({
+                          //   'status': 'inactive',
+                          // });
+                          // Navigator.pushNamed(context, MainScreen.id);
                         },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
