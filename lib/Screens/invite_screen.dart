@@ -11,6 +11,7 @@ import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 final _firestore = FirebaseFirestore.instance;
 
@@ -34,9 +35,17 @@ class _InviteState extends State<Invite> {
   String address;
   String place;
   String street;
+  String tokenID;
   List<Map> Invites = [];
   String senderName;
   String userID;
+
+  //getting token ID to be used for notifications
+
+
+  void configOneSignel() {
+    OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
+  }
 
   //uses logged in user email to get their username
   void getInvites() async {
@@ -78,6 +87,9 @@ class _InviteState extends State<Invite> {
         .collection('invites')
         .where('username', isEqualTo: username)
         .get();
+    var Notifystatus = await OneSignal.shared.getDeviceState();
+    String tokenID = Notifystatus.userId;
+    print(' the token ID is $tokenID');
     final List<DocumentSnapshot> selected = invites.docs;
     var i = 0;
     print(selected);
@@ -284,12 +296,7 @@ class _InviteState extends State<Invite> {
                                             'isSafe': true,
                                             'gid': gid,
                                             'tracking': false,
-                                          });
-                                          await _firestore
-                                              .collection("users")
-                                              .doc(userID)
-                                              .update({
-                                            'status': 'active',
+                                            'tokenID': tokenID,
                                           });
                                          await _firestore
                                               .collection("invites")
@@ -298,6 +305,12 @@ class _InviteState extends State<Invite> {
                                           setState(() {
                                             Invites.remove(user);
                                           });
+                                          // await _firestore
+                                          //     .collection("active_members")
+                                          //     .doc()
+                                          //     .update({
+                                          //   'safeTaps': safeTaps,
+                                          // });
                                           Navigator.pushNamed(
                                               context, ActiveGroup.id);
                                         },

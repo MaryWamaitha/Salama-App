@@ -6,15 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../Components/icons.dart';
-import 'create_group_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'trial_screen.dart';
-import 'bottommenu.dart';
-import 'invite_screen.dart';
-import 'moving_screen.dart';
-import 'settings.dart';
 import 'login_screen.dart';
+
 
 class MainScreen extends StatefulWidget {
   static String id = 'main_screen';
@@ -84,7 +79,8 @@ class _MainScreenState extends State<MainScreen> {
       await _firestore.collection("users").doc(docuID).update({
         'location': GeoPoint(_location.latitude, _location.longitude),
       });
-    }
+    };
+
   }
 
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
@@ -94,6 +90,7 @@ class _MainScreenState extends State<MainScreen> {
     accuracy: LocationAccuracy.bestForNavigation,
   );
   // final Set<Marker> _markers = {};
+
 
   void _onMapCreated(GoogleMapController _cntlr) async {
     getGroupMembers;

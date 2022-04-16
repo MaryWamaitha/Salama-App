@@ -10,9 +10,8 @@ import '../Components/icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:http/http.dart';
-import 'dart:async';
-import 'dart:convert';
+import '../models/calculateDistance.dart';
+import '../models/getUser.dart';
 
 final _firestore = FirebaseFirestore.instance;
 String username;
@@ -22,6 +21,36 @@ User loggedInUser;
 int minApprovals;
 int safeTaps;
 bool tapped = false;
+List<String> tokenIDList = [];
+List<String> memberTokens = [];
+
+//sending notifications
+void _handleSendNotification(
+    List<String> playerID, String heading, String content) async {
+  var deviceState = await OneSignal.shared.getDeviceState();
+
+  if (deviceState == null || deviceState.userId == null) return;
+
+  var imgUrlString =
+      "http://cdn1-www.dogtime.com/assets/uploads/gallery/30-impossibly-cute-puppies/impossibly-cute-puppy-2.jpg";
+
+  var notification = OSCreateNotification(
+      playerIds: playerID,
+      content: content,
+      heading: heading,
+      iosAttachments: {"id1": imgUrlString},
+      bigPicture: imgUrlString);
+  // buttons: [
+  //   OSActionButton(text: "test1", id: "id1"),
+  //   OSActionButton(text: "test2", id: "id2")
+  // ]);
+
+  var response = await OneSignal.shared.postNotification(notification);
+}
+
+void configOneSignel() {
+  OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
+}
 
 class ActiveGroup extends StatefulWidget {
   static String id = 'active_group_screen';
@@ -47,50 +76,16 @@ class _ActiveGroupState extends State<ActiveGroup> {
   double Distance;
   String activeID;
   bool isSafe;
-  List<String> tokenIDList = ['eade7dcc-c9f4-4aa9-a4fd-7224e235a4ef'];
-
-  //sending notifications
-  void _handleSendNotification() async {
-    var deviceState = await OneSignal.shared.getDeviceState();
-
-    if (deviceState == null || deviceState.userId == null) return;
-
-    var playerId = 'eade7dcc-c9f4-4aa9-a4fd-7224e235a4ef';
-
-    var imgUrlString =
-        "http://cdn1-www.dogtime.com/assets/uploads/gallery/30-impossibly-cute-puppies/impossibly-cute-puppy-2.jpg";
-
-    var notification = OSCreateNotification(
-        playerIds: [playerId],
-        content: "this is a test from OneSignal's Flutter SDK",
-        heading: "Test Notification",
-        iosAttachments: {"id1": imgUrlString},
-        bigPicture: imgUrlString,
-        buttons: [
-          OSActionButton(text: "test1", id: "id1"),
-          OSActionButton(text: "test2", id: "id2")
-        ]);
-
-    var response = await OneSignal.shared.postNotification(notification);
-  }
-
+  bool sent = false;
+  String place;
+  calculateDistance calcDist = calculateDistance();
+  getDetails Details = getDetails();
   //uses logged in user email to get their username
   void getUserDetails() async {
-    //once a user is registered or logged in then this current user will have  a variable
-    //the current user will be null if nobody is signed in
     try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        loggedInUser = user;
-        var member1 = loggedInUser.email;
-        final QuerySnapshot activity = await _firestore
-            .collection('users')
-            .where('email', isEqualTo: member1)
-            .get();
-        final List<DocumentSnapshot> selected = activity.docs;
-        //TODO: What happens if invite does not exist
-        if (selected.length > 0) {
-          var x = selected[0].data() as Map;
+      List<DocumentSnapshot> result = await Details.getUserDetail();
+        if (result.length > 0) {
+          var x = result[0].data() as Map;
           setState(() {
             userID = selected[0].id;
             status = x['status'];
@@ -109,7 +104,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
           // print('initial location is $userLocation');
           getUserLocation();
         }
-      }
+
     } catch (e) {
       print(e);
     }
@@ -120,10 +115,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
     Timer.periodic(Duration(seconds: 20), (timer) async {
       getUserLocation();
     });
-  }
-
-  void configOneSignel() {
-    OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
   }
 
   //method for getting user location and updating it locally
@@ -184,6 +175,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
         final details = documentSnapshot.data() as Map;
         setState(() {
           groupName = details['Name'];
+          place = details['Destination'];
           Distance = details['Distance'] * 1000;
           safeTaps = details['safeTaps'];
           groupLatitude = details['Location'].latitude;
@@ -195,15 +187,40 @@ class _ActiveGroupState extends State<ActiveGroup> {
     });
   }
 
+  void sendNotifications() async {
+    final QuerySnapshot user = await _firestore
+        .collection('active_members')
+        .where('gid', isEqualTo: groupID)
+        .get();
+    final List<DocumentSnapshot> selected = user.docs;
+    var i = 0;
+    while (i < selected.length) {
+      var result = selected[i].data() as Map;
+      var uname = result['username'];
+      final QuerySnapshot userTable = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: uname)
+          .get();
+      final List<DocumentSnapshot> value = user.docs;
+      var output = value[0].data() as Map;
+      var token = output['tokenID'];
+      memberTokens.add(token);
+      _handleSendNotification(memberTokens, '$username is unsafe. ',
+          '$username has moved away from $place beyond specified distance. Please check in');
+    }
+  }
+
   //TODO: CHange this to every 2 minutes
   //every minute, check if the user has arrived at location
   //once the activity is set to true, this timer stops working
+  //checks user location when group is created compared to destination and either marks tracking as true
+  //or false. true means you are now at location and tracking can begin. False means that you are not
+  //yet at location and tracking cannot begin
   void activateTimer() {
-    // print(' the use is beibg tracked $tracking');
+    print(' the use is beibg tracked $tracking');
     if (tracking == false) {
       Timer.periodic(Duration(seconds: 60), (timer) async {
-        var value = initializeTracking(
-            userLatitude, userLongitude, groupLatitude, groupLongitude);
+        var value = calcDist.trackingUser(userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
         //if the activity is now true, updating the tracking field in database and switching of timer
         if (value == true) {
           await _firestore.collection("active_members").doc(activeID).update({
@@ -211,48 +228,31 @@ class _ActiveGroupState extends State<ActiveGroup> {
           });
           timer.cancel();
           trackingTimer();
-          print('value is updateed and timer cancelled');
+          print('value is updateed and timer cancelled $tracking');
         }
       });
     } else {
       trackingTimer();
+      // print('value is updateed and timer cancelled $tracking');
     }
   }
 
-  //checks user location when group is created compared to destination and either marks tracking as true
-  //or false. true means you are now at location and tracking can begin. False means that you are not
-  //yet at location and tracking cannot begin
-  bool initializeTracking(lat1, lon1, lat2, lon2) {
-    bool active;
-    var p = 0.017453292519943295;
-    //method for calculating distance between two points
-    var a = 0.5 -
-        cos((lat2 - lat1) * p) / 2 +
-        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
-    double distance = 12742 * asin(sqrt(a));
-    distance = distance * 1000;
-    if (distance < 1000) {
-      active = true;
-    } else {
-      active = false;
-    }
-    // print('activity is $active');
-    // print('distance is $distance');
-    return active;
-  }
+
+
 
   //function that runs every 30 seconds and checks if you are still at location
   void trackingTimer() {
     Timer.periodic(Duration(seconds: 30), (timer) async {
-      var value = trackingUser(
-          userLatitude, userLongitude, groupLatitude, groupLongitude);
+      var value = calcDist.trackingUser(userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
+      print(' the safety value is $value');
       //if the activity is now true, updating the tracking field in database and switching of timer
       if (value == false) {
         await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': false,
         });
-        //TODO: This will run until the user either enters pin or multiple group members say that user is safe
-        print('value is updateed and timer cancelled');
+        if (sent == false) {
+          triggerNotification();
+        }
       } else {
         await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': true,
@@ -261,29 +261,11 @@ class _ActiveGroupState extends State<ActiveGroup> {
     });
   }
 
-  //main tracking function that keeps track of user location relative to group destination
-  bool trackingUser(lat1, lon1, lat2, lon2) {
-    bool active;
-    var p = 0.017453292519943295;
-    //method for calculating distance between two points
-    var a = 0.5 -
-        cos((lat2 - lat1) * p) / 2 +
-        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
-    double distance = 12742 * asin(sqrt(a));
-    distance = distance * 1000;
-    if (distance > Distance) {
-      setState(() {
-        isSafe = false;
-      });
-    } else {
-      setState(() {
-        isSafe = true;
-      });
-    }
-    // print('user isSafe is $isSafe');
-    // print('distance is $distance');
-    return isSafe;
+  void triggerNotification() {
+    sendNotifications();
+    sent = true;
   }
+
 
   @override
   void initState() {
@@ -338,19 +320,19 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       MembersStream(),
                       TextButton(
                         onPressed: () async {
-                          _handleSendNotification();
+                          // _handleSendNotification(tokenIDList, 'Wamaitha');
                           // //TODo: Add pin interface before removing user
-                          // await _firestore
-                          //     .collection("active_members")
-                          //     .doc(activeID)
-                          //     .delete();
-                          // await _firestore
-                          //     .collection("users")
-                          //     .doc(userID)
-                          //     .update({
-                          //   'status': 'inactive',
-                          // });
-                          // Navigator.pushNamed(context, MainScreen.id);
+                          await _firestore
+                              .collection("active_members")
+                              .doc(activeID)
+                              .delete();
+                          await _firestore
+                              .collection("users")
+                              .doc(userID)
+                              .update({
+                            'status': 'inactive',
+                          });
+                          Navigator.pushNamed(context, MainScreen.id);
                         },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
@@ -410,12 +392,23 @@ class MembersStream extends StatelessWidget {
           final memberUname = member['username'];
           final memberSafety = member['isSafe'];
           final memberID = member.id;
+          void getMemberDetails() async {
+            final QuerySnapshot activity = await _firestore
+                .collection('users')
+                .where('username', isEqualTo: memberUname)
+                .get();
+            final List<DocumentSnapshot> selected = activity.docs;
+            final x = selected[0].data() as Map;
+            var token = x['tokenID'];
+            tokenIDList.add(token);
+          }
 
           final memberStatus = MemberStatus(
             member: memberUname,
             isSafe: memberSafety,
             isMe: username == memberUname,
             memberID: memberID,
+            getDetails: getMemberDetails,
           );
 
           MembersStatuses.add(memberStatus);
@@ -432,12 +425,14 @@ class MembersStream extends StatelessWidget {
 }
 
 class MemberStatus extends StatelessWidget {
-  MemberStatus({this.member, this.isSafe, this.isMe, this.memberID});
+  MemberStatus(
+      {this.member, this.isSafe, this.isMe, this.memberID, this.getDetails});
 
   final String memberID;
   final String member;
   final bool isSafe;
   final bool isMe;
+  final void getDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -491,6 +486,10 @@ class MemberStatus extends StatelessWidget {
                             .update({
                           'safeTaps': safeTaps,
                         });
+                        _handleSendNotification(
+                            tokenIDList,
+                            '$username marked $member as safe',
+                            '$member had moved too far and $username has marked them as safe. \n If you are sure they are safe, please log in and click safe ignore on \n active group page ');
                       } else {
                         await _firestore
                             .collection("groups")
@@ -514,6 +513,10 @@ class MemberStatus extends StatelessWidget {
                             ],
                           ),
                         );
+                        _handleSendNotification(
+                            tokenIDList,
+                            '$username marked $member as safe',
+                            '$member had moved too far and $username has marked them as safe. \n If you are sure they are safe, please log in and click safe ignore on \n active group page ');
                       }
                     } else {
                       showDialog(
