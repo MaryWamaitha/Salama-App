@@ -65,6 +65,7 @@ class _CreateGroupState extends State<CreateGroup> {
 
   addMember addition = addMember();
   void _handleSendNotification(
+
       List<String> playerID, String heading, String content) async {
     var deviceState = await OneSignal.shared.getDeviceState();
 
@@ -194,6 +195,7 @@ class _CreateGroupState extends State<CreateGroup> {
     super.initState();
     getCurrentUser();
     getUsers();
+    configOneSignel();
   }
 
   @override
@@ -682,7 +684,6 @@ class _CreateGroupState extends State<CreateGroup> {
                                 'Location': GeoPoint(latitude, longi),
                                 'Destination': place,
                               });
-
                               var documentId = docRef.id;
                               await _firestore
                                   .collection("groups").doc(documentId)
@@ -713,11 +714,14 @@ class _CreateGroupState extends State<CreateGroup> {
                                   'sender': creator,
                                   'destination': place,
                                 });
-                                List tokenList = [invite['tokenID']];
+                                List<String> tokenList = [];
+                              tokenList.add(invite['tokenID'].toString());
+                                print('the token ID is $tokenList');
                                 _handleSendNotification(
                                     tokenList,
                                     '$username has invited you to join $groupName',
-                                    '$creator has invited you to join group to $place. \n To accept invite, please go to invites page ');
+                                    '$creator has invited you to join group to $place. \n To accept invite, please go to invites page '
+                                );
                               }
                               Navigator.pushNamed(context, ActiveGroup.id);
                             } catch (e) {
@@ -725,7 +729,7 @@ class _CreateGroupState extends State<CreateGroup> {
                                 context: context,
                                 builder: (ctx) => AlertDialog(
                                   title: Text(' Ops! Group creation Failed'),
-                                  content: Text('${e.message}'),
+                                  content: Text('The group creation wasnt successful'),
                                   actions: [
                                     TextButton(
                                       onPressed: () {

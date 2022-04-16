@@ -31,8 +31,6 @@ class _MainScreenState extends State<MainScreen> {
   LatLng userLocation;
   String status;
   String docuID;
-  String deviceTokenID;
-  String tokenID;
   String groupID;
   Set<Marker> _markers = Set<Marker>();
   final _auth = FirebaseAuth.instance;
@@ -197,8 +195,10 @@ class _MainScreenState extends State<MainScreen> {
             status = x['status'];
           });
          var tokenID= x['tokenID'];
-         configOneSignel();
-         if (tokenID != deviceTokenID){
+          OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
+          var Notifystatus = await OneSignal.shared.getDeviceState();
+          String deviceTokenID = Notifystatus.userId;
+         if (tokenID != deviceTokenID ){
            _firestore.collection("users").doc(docuID).update({
              'tokenID': deviceTokenID,
            });
@@ -212,11 +212,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  void configOneSignel() async {
-    OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
-    var Notifystatus = await OneSignal.shared.getDeviceState();
-    deviceTokenID = Notifystatus.userId;
-  }
+
   void getGroupMembers() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
