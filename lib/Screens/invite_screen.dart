@@ -7,11 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'active_group_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
-import 'package:google_api_headers/google_api_headers.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+
 
 final _firestore = FirebaseFirestore.instance;
 
@@ -298,6 +295,7 @@ class _InviteState extends State<Invite> {
                                             'tracking': false,
                                             'tokenID': tokenID,
                                           });
+
                                          await _firestore
                                               .collection("invites")
                                               .doc(id)
@@ -305,12 +303,12 @@ class _InviteState extends State<Invite> {
                                           setState(() {
                                             Invites.remove(user);
                                           });
-                                          // await _firestore
-                                          //     .collection("active_members")
-                                          //     .doc()
-                                          //     .update({
-                                          //   'safeTaps': safeTaps,
-                                          // });
+                                          await _firestore
+                                              .collection("groups").doc(gid)
+                                              .collection("safeTaps").add({
+                                            'username': username,
+                                            'safeTaps': 0,
+                                          });
                                           Navigator.pushNamed(
                                               context, ActiveGroup.id);
                                         },

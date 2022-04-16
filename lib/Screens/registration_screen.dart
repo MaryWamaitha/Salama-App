@@ -1,5 +1,5 @@
 import 'package:salama/constants.dart';
-
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,8 +25,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String cPassword;
   bool showSpinner = false;
   int available = 0;
-
+  String tokenID;
+  void configOneSignel() async {
+    OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
+    var Notifystatus = await OneSignal.shared.getDeviceState();
+    String tokenID = Notifystatus.userId;
+  }
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    configOneSignel();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +260,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 'username': username,
                                 'status': status,
                                 'location': GeoPoint(0, 0),
+                                'tokenID': tokenID,
                               });
                               final newUser =
                                   await _auth.createUserWithEmailAndPassword(

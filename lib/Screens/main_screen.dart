@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../constants.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -9,6 +10,8 @@ import '../Components/icons.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
+import 'package:workmanager/workmanager.dart';
+
 
 
 class MainScreen extends StatefulWidget {
@@ -28,14 +31,38 @@ class _MainScreenState extends State<MainScreen> {
   LatLng userLocation;
   String status;
   String docuID;
+  String deviceTokenID;
+  String tokenID;
   String groupID;
   Set<Marker> _markers = Set<Marker>();
   final _auth = FirebaseAuth.instance;
-
   //the text controller helps us in managing the text field eg clearing it when the send button is clicked
   final messageTextController = TextEditingController();
   String email;
   String messageText;
+
+  static const fetchBackground = "fetchBackground";
+
+  void callbackDispatcher() {
+    Workmanager().executeTask((task, inputData) async {
+      switch (task) {
+        case fetchBackground:
+          final _locationData = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.bestForNavigation);
+          setState(() {
+            _location = _locationData;
+          });
+          if (status == 'active') {
+            // if a user is acrive, save their location to database anytime it is changed
+            await _firestore.collection("users").doc(docuID).update({
+              'location': GeoPoint(_location.latitude, _location.longitude),
+            });
+          };
+          break;
+      }
+      return Future.value(true);
+    });
+  }
 
   Future getUserLocation() async {
     bool serviceEnabled;
@@ -169,6 +196,14 @@ class _MainScreenState extends State<MainScreen> {
             docuID = selected[0].id;
             status = x['status'];
           });
+         var tokenID= x['tokenID'];
+         configOneSignel();
+         if (tokenID != deviceTokenID){
+           _firestore.collection("users").doc(docuID).update({
+             'tokenID': deviceTokenID,
+           });
+         }
+
         }
         getGroupMembers();
       }
@@ -177,6 +212,11 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void configOneSignel() async {
+    OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
+    var Notifystatus = await OneSignal.shared.getDeviceState();
+    deviceTokenID = Notifystatus.userId;
+  }
   void getGroupMembers() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
@@ -252,6 +292,16 @@ class _MainScreenState extends State<MainScreen> {
     getCurrentUser();
     getUserLocation();
     trackingMembers();
+    Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: true,
+    );
+
+    Workmanager().registerPeriodicTask(
+      "1",
+      fetchBackground,
+      frequency: Duration(minutes: 15),
+    );
   }
 
 

@@ -8,7 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import '../Components/icons.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:math';
+import 'package:workmanager/workmanager.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../models/calculateDistance.dart';
 import '../models/getUser.dart';
@@ -80,6 +80,19 @@ class _ActiveGroupState extends State<ActiveGroup> {
   String place;
   calculateDistance calcDist = calculateDistance();
   getDetails Details = getDetails();
+  static const fetchBackground = "fetchBackground";
+
+  void callbackDispatcher() {
+    Workmanager().executeTask((task, inputData) async {
+      switch (task) {
+        case fetchBackground:
+       trackingTimer();
+       activateTimer();
+          break;
+      }
+      return Future.value(true);
+    });
+  }
   //uses logged in user email to get their username
   void getUserDetails() async {
     try {
@@ -171,17 +184,17 @@ class _ActiveGroupState extends State<ActiveGroup> {
         .doc(groupID)
         .get()
         .then((DocumentSnapshot documentSnapshot) {
-      if (documentSnapshot.exists) {
+      if (documentSnapshot.exists)  {
         final details = documentSnapshot.data() as Map;
         setState(() {
           groupName = details['Name'];
           place = details['Destination'];
           Distance = details['Distance'] * 1000;
-          safeTaps = details['safeTaps'];
           groupLatitude = details['Location'].latitude;
           groupLongitude = details['Location'].longitude;
           destination = LatLng(
               details['Location'].latitude, details['Location'].longitude);
+
         });
       }
     });
@@ -226,6 +239,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
           await _firestore.collection("active_members").doc(activeID).update({
             'tracking': true,
           });
+          tracking=true;
           timer.cancel();
           trackingTimer();
           print('value is updateed and timer cancelled $tracking');
@@ -275,6 +289,16 @@ class _ActiveGroupState extends State<ActiveGroup> {
     activateTimer();
     startLocating();
     configOneSignel();
+    Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: true,
+    );
+
+    Workmanager().registerPeriodicTask(
+      "1",
+      fetchBackground,
+      frequency: Duration(minutes: 15),
+    );
   }
 
   @override
@@ -469,6 +493,15 @@ class MemberStatus extends StatelessWidget {
           isMe == false && isSafe == false
               ? TextButton(
                   onPressed: () async {
+                    //accessing the safeTaps collection which is nested in groups
+                    final QuerySnapshot safeDetails = await _firestore
+                        .collection('active_members').doc(groupID).collection('safeTaps')
+                        .where('username', isEqualTo: member)
+                        .get();
+                    final List<DocumentSnapshot> selected = safeDetails.docs;
+                    var result = selected[0].data() as Map;
+                    var safeID = selected[0].id;
+                    safeTaps = result['safeTaps'];
                     if (tapped == false) {
                       safeTaps = safeTaps + 1;
                       tapped = true;
@@ -482,7 +515,7 @@ class MemberStatus extends StatelessWidget {
                         });
                         await _firestore
                             .collection("groups")
-                            .doc(groupID)
+                            .doc(groupID).collection('safeTaps').doc(safeID)
                             .update({
                           'safeTaps': safeTaps,
                         });

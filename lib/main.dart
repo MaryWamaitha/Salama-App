@@ -34,7 +34,7 @@ class Salama extends StatelessWidget {
         ),
         hintColor: Colors.grey,
       ),
-      initialRoute: WelcomeScreen.id,
+      initialRoute: LoginScreen.id,
       routes: {
         WelcomeScreen.id: (context) => WelcomeScreen(),
         LoginScreen.id: (context) => LoginScreen(),
@@ -53,7 +53,7 @@ class Salama extends StatelessWidget {
         RepeatPin.id: (context) => RepeatPin(),
       },
       //TODO: If user is already logged in on device, they should be redirected to the main_screen page
-      home: WelcomeScreen(),
+      home: LoginScreen(),
     );
   }
 }
