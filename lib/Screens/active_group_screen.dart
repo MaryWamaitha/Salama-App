@@ -7,11 +7,11 @@ import 'dart:async';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import '../Components/icons.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../models/calculateDistance.dart';
 import '../models/getUser.dart';
+import 'package:salama/Screens/leave_group.dart';
 
 final _firestore = FirebaseFirestore.instance;
 String username;
@@ -86,38 +86,37 @@ class _ActiveGroupState extends State<ActiveGroup> {
     Workmanager().executeTask((task, inputData) async {
       switch (task) {
         case fetchBackground:
-       trackingTimer();
-       activateTimer();
+          activateTimer();
           break;
       }
       return Future.value(true);
     });
   }
+
   //uses logged in user email to get their username
   void getUserDetails() async {
     try {
       List<DocumentSnapshot> result = await Details.getUserDetail();
-        if (result.length > 0) {
-          var x = result[0].data() as Map;
-          setState(() {
-            userID = selected[0].id;
-            status = x['status'];
-            username = x['username'];
-            userLocation =
-                LatLng(x['location'].latitude, x['location'].longitude);
-            userLatitude = x['location'].latitude;
-            userLongitude = x['location'].longitude;
-          });
-          var Notifystatus = await OneSignal.shared.getDeviceState();
-          String tokenId = Notifystatus.userId;
-          print(' the token ID is $tokenId');
-          // print('username is $username');
-          // print('userID is $userID');
-          // print('status is $status');
-          // print('initial location is $userLocation');
-          getUserLocation();
-        }
-
+      if (result.length > 0) {
+        var x = result[0].data() as Map;
+        setState(() {
+          userID = selected[0].id;
+          status = x['status'];
+          username = x['username'];
+          userLocation =
+              LatLng(x['location'].latitude, x['location'].longitude);
+          userLatitude = x['location'].latitude;
+          userLongitude = x['location'].longitude;
+        });
+        var Notifystatus = await OneSignal.shared.getDeviceState();
+        String tokenId = Notifystatus.userId;
+        print(' the token ID is $tokenId');
+        // print('username is $username');
+        // print('userID is $userID');
+        // print('status is $status');
+        // print('initial location is $userLocation');
+        getUserLocation();
+      }
     } catch (e) {
       print(e);
     }
@@ -163,28 +162,14 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //use username to get invite details like GID, sender etc
   void getGroupDetails() async {
     //getting the username which is used to get the users active group - user can only be in one active group for one group
-    final QuerySnapshot user = await _firestore
-        .collection('active_members')
-        .where('username', isEqualTo: username)
-        .get();
-    final List<DocumentSnapshot> selected = user.docs;
-    var result = selected[0].data() as Map;
 
-    print('Group details are $result');
-    setState(() {
-      groupID = result['gid'];
-      tracking = result['tracking'];
-      sender = result['sender'];
-      activeID = selected[0].id;
-      // print('the active ID is $activeID');
-    });
     //using the GID to get group details
     FirebaseFirestore.instance
         .collection('groups')
         .doc(groupID)
         .get()
         .then((DocumentSnapshot documentSnapshot) {
-      if (documentSnapshot.exists)  {
+      if (documentSnapshot.exists) {
         final details = documentSnapshot.data() as Map;
         setState(() {
           groupName = details['Name'];
@@ -194,7 +179,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
           groupLongitude = details['Location'].longitude;
           destination = LatLng(
               details['Location'].latitude, details['Location'].longitude);
-
         });
       }
     });
@@ -233,13 +217,14 @@ class _ActiveGroupState extends State<ActiveGroup> {
     print(' the use is beibg tracked $tracking');
     if (tracking == false) {
       Timer.periodic(Duration(seconds: 60), (timer) async {
-        var value = calcDist.trackingUser(userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
+        var value = calcDist.trackingUser(
+            userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
         //if the activity is now true, updating the tracking field in database and switching of timer
         if (value == true) {
           await _firestore.collection("active_members").doc(activeID).update({
             'tracking': true,
           });
-          tracking=true;
+          tracking = true;
           timer.cancel();
           trackingTimer();
           print('value is updateed and timer cancelled $tracking');
@@ -251,13 +236,11 @@ class _ActiveGroupState extends State<ActiveGroup> {
     }
   }
 
-
-
-
   //function that runs every 30 seconds and checks if you are still at location
   void trackingTimer() {
     Timer.periodic(Duration(seconds: 30), (timer) async {
-      var value = calcDist.trackingUser(userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
+      var value = calcDist.trackingUser(
+          userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
       print(' the safety value is $value');
       //if the activity is now true, updating the tracking field in database and switching of timer
       if (value == false) {
@@ -279,7 +262,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
     sendNotifications();
     sent = true;
   }
-
 
   @override
   void initState() {
@@ -343,20 +325,8 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       ),
                       MembersStream(),
                       TextButton(
-                        onPressed: () async {
-                          // _handleSendNotification(tokenIDList, 'Wamaitha');
-                          // //TODo: Add pin interface before removing user
-                          await _firestore
-                              .collection("active_members")
-                              .doc(activeID)
-                              .delete();
-                          await _firestore
-                              .collection("users")
-                              .doc(userID)
-                              .update({
-                            'status': 'inactive',
-                          });
-                          Navigator.pushNamed(context, MainScreen.id);
+                        onPressed: () {
+                          Navigator.pushNamed(context, LeaveGroup.id);
                         },
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
@@ -495,7 +465,9 @@ class MemberStatus extends StatelessWidget {
                   onPressed: () async {
                     //accessing the safeTaps collection which is nested in groups
                     final QuerySnapshot safeDetails = await _firestore
-                        .collection('active_members').doc(groupID).collection('safeTaps')
+                        .collection('active_members')
+                        .doc(groupID)
+                        .collection('safeTaps')
                         .where('username', isEqualTo: member)
                         .get();
                     final List<DocumentSnapshot> selected = safeDetails.docs;
@@ -515,9 +487,11 @@ class MemberStatus extends StatelessWidget {
                         });
                         await _firestore
                             .collection("groups")
-                            .doc(groupID).collection('safeTaps').doc(safeID)
+                            .doc(groupID)
+                            .collection('safeTaps')
+                            .doc(safeID)
                             .update({
-                          'safeTaps': safeTaps,
+                          'safeTaps': 0,
                         });
                         _handleSendNotification(
                             tokenIDList,
@@ -527,6 +501,8 @@ class MemberStatus extends StatelessWidget {
                         await _firestore
                             .collection("groups")
                             .doc(groupID)
+                            .collection('safeTaps')
+                            .doc(safeID)
                             .update({
                           'safeTaps': safeTaps,
                         });

@@ -23,6 +23,7 @@ const divider = Divider(
   color: Colors.white70, // The color to use when painting the line.
   height: 20, // The divider's height extent.
 );
+
 const kMessageTextFieldDecoration = InputDecoration(
   contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
   hintText: 'Type your message here...',

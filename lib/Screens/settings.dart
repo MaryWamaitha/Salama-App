@@ -61,7 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 settingsItems(
                   mainText: 'Security Code',
                   explanation:
-                      'Set your security code which you can use to let \n people tracking you know you are safe',
+                      'Set your security code which you need to \n leave groups',
                   page: CreatePin.id,
                 ),
               ],

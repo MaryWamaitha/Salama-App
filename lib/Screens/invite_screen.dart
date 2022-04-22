@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:salama/Screens/settings.dart';
 import 'main_screen.dart';
 import 'package:geocoding/geocoding.dart';
 import '../constants.dart';
@@ -36,6 +37,7 @@ class _InviteState extends State<Invite> {
   List<Map> Invites = [];
   String senderName;
   String userID;
+  int setPin;
 
   //getting token ID to be used for notifications
 
@@ -111,7 +113,6 @@ class _InviteState extends State<Invite> {
           .then((DocumentSnapshot documentSnapshot) {
         if (documentSnapshot.exists) {
           var doc_id2 = documentSnapshot.id;
-
           final group = documentSnapshot.data() as Map;
           groupName = group['Name'];
           place = group['place'];
@@ -139,6 +140,12 @@ class _InviteState extends State<Invite> {
       });
       ++i;
     }
+    final QuerySnapshot record = await _firestore
+        .collection('pins')
+        .where('userID', isEqualTo: userID)
+        .get();
+    final List<DocumentSnapshot> found = record.docs;
+    setPin = found.length;
   }
 
   final optionsMap = {
@@ -309,8 +316,28 @@ class _InviteState extends State<Invite> {
                                             'username': username,
                                             'safeTaps': 0,
                                           });
-                                          Navigator.pushNamed(
-                                              context, ActiveGroup.id);
+                                          if ( setPin == 0){
+                                            showDialog(
+                                              context: context,
+                                              builder: (ctx) => AlertDialog(
+                                                title: Text('Set pin'),
+                                                content: Text(
+                                                    'Hey there, please set your pin in settings \n You will need the pin to leave your groups yourself'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pushNamed(
+                                                          context, SettingsPage.id);
+                                                    },
+                                                    child: Text('Okay'),
+                                                  )
+                                                ],
+                                              ),
+                                            );
+                                          } else {
+                                            Navigator.pushNamed(
+                                                context, ActiveGroup.id);
+                                          }
                                         },
                                         child: Container(
                                           decoration: BoxDecoration(
