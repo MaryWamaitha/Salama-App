@@ -31,11 +31,14 @@ class _SafeWordState extends State<SafeWord> {
   Encrypter encrypter;
   Encrypted encrypted;
   String decrypted;
+  String groupID;
   String activeID;
   int set = 0;
+  String safeWord;
 
   void getUserDetails() async {
     try {
+      //geting the user details
       List<DocumentSnapshot> result = await Details.getUserDetail();
       if (result.length > 0) {
         var x = result[0].data() as Map;
@@ -43,34 +46,49 @@ class _SafeWordState extends State<SafeWord> {
           userID = selected[0].id;
           username = x['username'];
         });
+        //using the username gotten to get the user record in the pin table and check if the user has a pin
         final QuerySnapshot record = await _firestore
             .collection('pins')
             .where('userID', isEqualTo: userID)
             .get();
         final List<DocumentSnapshot> found = record.docs;
+        //getting the length of the returned document. If its length is greater than 0, it means a pin exists, set will
+        //have a length that is greater than zero and we can get the pin
         set = found.length;
-        print('the pin exists ');
-        var entry = found[0].data() as Map;
-        pin = entry['pin'];
+        if ( set > 0){
+          var entry = found[0].data() as Map;
+          pin = entry['pin'];
+        }
+
       }
-      // final publicKey = await parseKeyFromFile<RSAPublicKey>('test/public.pem');
-      // final privKey = await parseKeyFromFile<RSAPrivateKey>('test/private.pem');
-      // encrypter = Encrypter(RSA(publicKey: publicKey, privateKey: privKey));
-      // decrypted = encrypter.decrypt(encrypted);
+
+      //using the username, we access the active_members table where we get the GID
       final QuerySnapshot user = await _firestore
           .collection('active_members')
           .where('username', isEqualTo: username)
           .get();
       final List<DocumentSnapshot> returned = user.docs;
-      print('Group details are $result');
+      var data =returned[0].data() as Map;
       setState(() {
         activeID = returned[0].id;
-        // print('the active ID is $activeID');
+        groupID = data[0]['gid'];
+      });
+      //the gid is used to get a record in the group table that matches the gid gotten and this is used  to get the safe word
+      final QuerySnapshot group = await _firestore
+          .collection('groups')
+          .where('gid', isEqualTo: groupID)
+          .get();
+      final List<DocumentSnapshot> groupDoc = group.docs;
+      var groupMap =groupDoc[0].data() as Map;
+      setState(() {
+        activeID = returned[0].id;
+        safeWord = groupMap[0]['safeWord'];
       });
     } catch (e) {
       print(e);
     }
   }
+
   @override
   void initState() {
     super.initState();
@@ -145,24 +163,28 @@ class _SafeWordState extends State<SafeWord> {
                               ),
                             );
                           } else {
-                            await _firestore
-                                .collection("active_members")
-                                .doc(activeID)
-                                .delete();
-                            await _firestore
-                                .collection("users")
-                                .doc(userID)
-                                .update({
-                              'status': 'inactive',
-                            });
-                            Navigator.pushNamed(context, MainScreen.id);
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(' Safe Word' ),
+                                content: Text(
+                                    'The safe word for the group is $safeWord'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(context, ActiveGroup.id);
+                                    },
+                                    child: Text('Go back to group'),
+                                  )
+                                ],
+                              ),
+                            );
                           }
                         },
                         onChanged: (value) {
                           debugPrint(value);
                           setState(() {
                             currentText = value;
-                            print('the current data is $currentText');
                           });
                         },
                         beforeTextPaste: (text) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:salama/Screens/create_group_screen.dart';
+import 'package:salama/Screens/safe_word.dart';
 import 'main_screen.dart';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -365,12 +366,37 @@ class _ActiveGroupState extends State<ActiveGroup> {
                           padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
                           child: Container(
                             decoration: BoxDecoration(
-                                color: Colors.amberAccent,
+                                color: kMainColour,
                                 borderRadius: new BorderRadius.all(
                                   const Radius.circular(30.0),
                                 )),
                             height: 50,
                             width: 150.00,
+                            child: Center(
+                              child: Text(
+                                'View Group Safe Word',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, SafeWord.id);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.amberAccent,
+                                borderRadius: new BorderRadius.all(
+                                  const Radius.circular(30.0),
+                                )),
+                            height: 50,
+                            width: 170.00,
                             child: Center(
                               child: Text(
                                 'Leave Group',
