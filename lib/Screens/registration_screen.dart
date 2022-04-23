@@ -26,11 +26,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool showSpinner = false;
   int available = 0;
   String tokenID;
+
+  //the method is used to initialize and set the one Signal app ID, and also gets the device token ID which is used to send notifications
   void configOneSignel() async {
     OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
     var Notifystatus = await OneSignal.shared.getDeviceState();
     String tokenID = Notifystatus.userId;
   }
+
+  //initiliazing the form which is used for registering. Additionally, once the form is validated, thats when the registration can happen
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -118,6 +122,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     final List<DocumentSnapshot> documents = result.docs;
                     available = documents.length;
                   },
+                  //validator is useed to check if the username field is empty and if it is, an error, the returned value is displayed as an error
                   validator: (username) {
                     if (username == null || username.isEmpty) {
                       return 'Please enter a username';
@@ -125,6 +130,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       return null;
                     }
                   },
+                  // decoration  for the textfield
                   decoration: InputDecoration(
                     hintText: 'Enter a unique Username',
                     contentPadding:
@@ -145,6 +151,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 SizedBox(
                   height: 8.0,
                 ),
+                //password textfield and decoration
                 TextFormField(
                   //obscure text is what makes passwords look like passwords
                   obscureText: true,
@@ -153,6 +160,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   onChanged: (value) {
                     password = value; //Do something with the user input.
                   },
+                  //validator is useed to check if the password field is empty and if it is, an error, the returned value is displayed as an error
                   validator: (password) {
                     if (password == null || password.isEmpty) {
                       return 'Please enter a password';
@@ -182,6 +190,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 SizedBox(
                   height: 8.0,
                 ),
+
                 TextFormField(
                   //obscure text is what makes passwords look like passwords
                   obscureText: true,
@@ -190,6 +199,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   onChanged: (value) {
                     cPassword = value; //Do something with the user input.
                   },
+                  //validator is used to check if the repeat password field is empty and if it is, an error, the returned value is displayed as an error
+                  //the validator also confirms if the entered password is equal to what was previously entered, and if it is not, an error is displayed
                   validator: (cPassword) {
                     if (cPassword == null || cPassword.isEmpty) {
                       return 'Please enter a password';
@@ -228,14 +239,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     elevation: 5.0,
                     child: MaterialButton(
                       onPressed: () async {
+                        //if all the form text fields are valid, then the following instructions are implemented
                         if (_formKey.currentState.validate()) {
-                          //TODO: Make username a unique field and show error if duplicated
+                         //checking if there is a user record with the same name since usernames are expected to be unique
                           final QuerySnapshot result = await _firestore
                               .collection('users')
                               .where('username', isEqualTo: username)
                               .get();
                           final List<DocumentSnapshot> documents = result.docs;
                           available = documents.length;
+                          //if a record with the same username exists, a dialog box comes up that displays the error
                           if (available > 0) {
                             showDialog(
                               context: context,
@@ -254,6 +267,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               ),
                             );
                           } else {
+                            //if the username does not include in the database, the user details are saved to the user table
                             try {
                               _firestore.collection('users').add({
                                 'email': email,
@@ -267,13 +281,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       email: email, password: password);
                               if (newUser != null) {
                                 showSpinner = false;
+                                //once the process happens successfully, the user is redirected to the main screen
                                 Navigator.pushNamed(context, MainScreen.id);
                               }
                             } on FirebaseAuthException catch (e) {
+                              //if an error pops up during the process, it is displayed in a dialog box
                               showDialog(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: Text(' Ops! Registration Failed'),
+                                  title: Text('Ops! Registration Failed'),
                                   content: Text('${e.message}'),
                                   actions: [
                                     TextButton(

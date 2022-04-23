@@ -14,14 +14,14 @@ import 'package:salama/Components/icons.dart';
 final _firestore = FirebaseFirestore.instance;
 final keyPair = RsaKeyHelper().generateKeyPair();
 
-class LeaveGroup extends StatefulWidget {
+class SafeWord extends StatefulWidget {
   static String id = 'leave_group';
 
   @override
-  _LeaveGroupState createState() => _LeaveGroupState();
+  _SafeWordState createState() => _SafeWordState();
 }
 
-class _LeaveGroupState extends State<LeaveGroup> {
+class _SafeWordState extends State<SafeWord> {
   TextEditingController textEditingController = TextEditingController();
   String currentText = "";
   String userID;

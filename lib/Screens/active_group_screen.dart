@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:salama/Screens/create_group_screen.dart';
 import 'main_screen.dart';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,7 +25,7 @@ bool tapped = false;
 List<String> tokenIDList = [];
 List<String> memberTokens = [];
 
-//sending notifications
+//sending notifications using OneSignal
 void _handleSendNotification(
     List<String> playerID, String heading, String content) async {
   var deviceState = await OneSignal.shared.getDeviceState();
@@ -44,10 +45,10 @@ void _handleSendNotification(
   //   OSActionButton(text: "test1", id: "id1"),
   //   OSActionButton(text: "test2", id: "id2")
   // ]);
-
   var response = await OneSignal.shared.postNotification(notification);
 }
 
+//configuring oneSignel and setting the appID
 void configOneSignel() {
   OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
 }
@@ -82,11 +83,30 @@ class _ActiveGroupState extends State<ActiveGroup> {
   getDetails Details = getDetails();
   static const fetchBackground = "fetchBackground";
 
+  //the following function runs the activating function and initializes the trackingTimer
   void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
       switch (task) {
         case fetchBackground:
-          activateTimer();
+          startLocating();
+          if (tracking == false) {
+            Timer.periodic(Duration(seconds: 60), (timer) async {
+              var value = calcDist.trackingUser(
+                  userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
+              //if the activity is now true, updating the tracking field in database and switching of timer
+              if (value == true) {
+                await _firestore.collection("active_members").doc(activeID).update({
+                  'tracking': true,
+                });
+                tracking = true;
+                timer.cancel();
+                trackingTimer();
+                print('value is updateed and timer cancelled $tracking');
+              }
+            });
+          } else {
+            trackingTimer();
+          }
           break;
       }
       return Future.value(true);
@@ -96,8 +116,11 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //uses logged in user email to get their username
   void getUserDetails() async {
     try {
+      //accessing the user details from the getUser Class
+      //this returns a list of document snapshots
       List<DocumentSnapshot> result = await Details.getUserDetail();
       if (result.length > 0) {
+        //changing the returned data to a map so that we can read it
         var x = result[0].data() as Map;
         setState(() {
           userID = selected[0].id;
@@ -108,14 +131,19 @@ class _ActiveGroupState extends State<ActiveGroup> {
           userLatitude = x['location'].latitude;
           userLongitude = x['location'].longitude;
         });
-        var Notifystatus = await OneSignal.shared.getDeviceState();
-        String tokenId = Notifystatus.userId;
-        print(' the token ID is $tokenId');
-        // print('username is $username');
-        // print('userID is $userID');
-        // print('status is $status');
-        // print('initial location is $userLocation');
-        getUserLocation();
+        //using the returned username to get the user record in the active_members table
+        final QuerySnapshot user = await _firestore
+            .collection('active_members')
+            .where('username', isEqualTo: username)
+            .get();
+        //once we find the record, we get the groupID from it. The group ID is used in loading the stream
+        final List<DocumentSnapshot> groupDets = user.docs;
+          var record = groupDets[0].data() as Map;
+          groupID = record['gid'];
+          var Notifystatus = await OneSignal.shared.getDeviceState();
+          String tokenId = Notifystatus.userId;
+          print(' the token ID is $tokenId');
+
       }
     } catch (e) {
       print(e);
@@ -129,42 +157,31 @@ class _ActiveGroupState extends State<ActiveGroup> {
     });
   }
 
-  //method for getting user location and updating it locally
+  //method for getting user location from database and updating it locally
   void getUserLocation() async {
     try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        loggedInUser = user;
-        var member1 = loggedInUser.email;
-        final QuerySnapshot activity = await _firestore
-            .collection('users')
-            .where('email', isEqualTo: member1)
-            .get();
-        final List<DocumentSnapshot> selected = activity.docs;
-        if (selected.length > 0) {
-          var x = selected[0].data() as Map;
-
+      //this returns a list of document snapshots with user record from user table
+      List<DocumentSnapshot> result = await Details.getUserDetail();
+      if (result.length > 0) {
+        //changing the returned data to a map so that we can read it
+        var x = result[0].data() as Map;
           setState(() {
-            userID = selected[0].id;
+            //getting the user location from the database and putting it in a local variable
             userLocation =
                 LatLng(x['location'].latitude, x['location'].longitude);
             userLatitude = x['location'].latitude;
             userLongitude = x['location'].longitude;
           });
-          // print(' the location evben  when changed ois $userLocation');
-        }
       }
     } catch (e) {
       print(e);
     }
   }
 
-  //use username to get invite details like GID, sender etc
+ //getting group details which are displayed on the page
   void getGroupDetails() async {
-    //getting the username which is used to get the users active group - user can only be in one active group for one group
-
     //using the GID to get group details
-    FirebaseFirestore.instance
+        _firestore
         .collection('groups')
         .doc(groupID)
         .get()
@@ -172,6 +189,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
       if (documentSnapshot.exists) {
         final details = documentSnapshot.data() as Map;
         setState(() {
+          // assigning the groupName and other variables to the values from the database
           groupName = details['Name'];
           place = details['Destination'];
           Distance = details['Distance'] * 1000;
@@ -184,31 +202,40 @@ class _ActiveGroupState extends State<ActiveGroup> {
     });
   }
 
-  void sendNotifications() async {
+
+  //if a user is unsafe, this function is run
+  //the function uses the group ID to get a list of all active_mmebers with the same groupID
+  void sendSafetyNotifications() async {
     final QuerySnapshot user = await _firestore
         .collection('active_members')
         .where('gid', isEqualTo: groupID)
         .get();
     final List<DocumentSnapshot> selected = user.docs;
+    //looping through the returned list
     var i = 0;
     while (i < selected.length) {
       var result = selected[i].data() as Map;
+      //accessing the username in each of the document snapshots and using the usernames to get the record from the user table
       var uname = result['username'];
       final QuerySnapshot userTable = await _firestore
           .collection('users')
           .where('username', isEqualTo: uname)
           .get();
-      final List<DocumentSnapshot> value = user.docs;
+      final List<DocumentSnapshot> value = userTable.docs;
       var output = value[0].data() as Map;
+      //accessing the tokenID which identifies user devices
       var token = output['tokenID'];
+      //adding the token to an empty list ( oneSignel uses lists of tokenId)
       memberTokens.add(token);
+     //sending notifications to the specific user
       _handleSendNotification(memberTokens, '$username is unsafe. ',
           '$username has moved away from $place beyond specified distance. Please check in');
+      //incrementing the index and repeating process
+      i++;
     }
   }
 
-  //TODO: CHange this to every 2 minutes
-  //every minute, check if the user has arrived at location
+  //every 2 minute, check if the user has arrived at location
   //once the activity is set to true, this timer stops working
   //checks user location when group is created compared to destination and either marks tracking as true
   //or false. true means you are now at location and tracking can begin. False means that you are not
@@ -216,37 +243,41 @@ class _ActiveGroupState extends State<ActiveGroup> {
   void activateTimer() {
     print(' the use is beibg tracked $tracking');
     if (tracking == false) {
-      Timer.periodic(Duration(seconds: 60), (timer) async {
+      Timer.periodic(Duration(minutes: 2), (timer) async {
         var value = calcDist.trackingUser(
             userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
         //if the activity is now true, updating the tracking field in database and switching of timer
         if (value == true) {
+          //set the tracking to true in database
           await _firestore.collection("active_members").doc(activeID).update({
             'tracking': true,
           });
           tracking = true;
+          //cancelling the tracking timer
           timer.cancel();
           trackingTimer();
-          print('value is updateed and timer cancelled $tracking');
         }
       });
     } else {
+      //if the user tracking was already true, run the trackingTimer immediatly
       trackingTimer();
       // print('value is updateed and timer cancelled $tracking');
     }
   }
 
-  //function that runs every 30 seconds and checks if you are still at location
+  //function that runs every 60 seconds and checks if you are still at location
   void trackingTimer() {
-    Timer.periodic(Duration(seconds: 30), (timer) async {
+    Timer.periodic(Duration(seconds: 60), (timer) async {
       var value = calcDist.trackingUser(
           userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
-      print(' the safety value is $value');
-      //if the activity is now true, updating the tracking field in database and switching of timer
+      //if the user is not safe ( tracking User function returned a false)
+      //the isSafe value is updated in the database as false ( this also changes the icon colour)
       if (value == false) {
         await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': false,
         });
+        //this checks if the notification had been previously sent
+        //false means a  notification has not been sent and true means this particular instance of the notification has been sent
         if (sent == false) {
           triggerNotification();
         }
@@ -259,10 +290,11 @@ class _ActiveGroupState extends State<ActiveGroup> {
   }
 
   void triggerNotification() {
-    sendNotifications();
+    sendSafetyNotifications();
     sent = true;
   }
 
+  //the following functions are run when the screen is initialized
   @override
   void initState() {
     super.initState();
@@ -310,6 +342,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
               ),
               backgroundColor: kMainColour,
             )),
+        //if the user status is active, the UI loads stream, leave group button etc
         body: status == 'active'
             ? SafeArea(
                 child: Column(
@@ -352,7 +385,65 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       Menu(),
                     ]),
               )
-            : Text('Not in any group'));
+        //if the user is not active in any group, they are informed that they are not in any group
+            : Padding(
+          padding: EdgeInsets.only(top: 120),
+          child: Container(
+            color: kBackgroundColour,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(25,15,25,0),
+                    child: Container(
+                      color: kMainColour,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 15.0),
+                              child: Text(
+                                  'You are not in any group. '),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, CreateGroup.id);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.amberAccent,
+                                    borderRadius: new BorderRadius.all(
+                                      const Radius.circular(30.0),
+                                    )),
+                                height: 50,
+                                width: 150.00,
+                                child: Center(
+                                  child: Text(
+                                    'Click here to create a group',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Menu()
+              ],
+            ),
+          ),
+        ),
+    );
   }
 }
 
@@ -374,18 +465,23 @@ class MembersStream extends StatelessWidget {
           );
         }
         final members = snapshot.data.docs.reversed;
+        //getting the length of the snapshot ( number of records) to determine the minApprovals
         var number = members.length;
-        if (number > 2) {
+        //if the number is greater than or equal to 2, the minApprovals are 2 else the minApprovals are 1
+        if (number >= 2) {
           minApprovals = 2;
         } else {
-          minApprovals = 2;
+          minApprovals = 1;
         }
 
+        //loop through the returned snapshot and on each instance, get the username, safety status
+        //userID and use the username
         List<MemberStatus> MembersStatuses = [];
         for (var member in members) {
           final memberUname = member['username'];
           final memberSafety = member['isSafe'];
           final memberID = member.id;
+          //function uses the username to get the tokenID from the user table
           void getMemberDetails() async {
             final QuerySnapshot activity = await _firestore
                 .collection('users')
@@ -397,6 +493,7 @@ class MembersStream extends StatelessWidget {
             tokenIDList.add(token);
           }
 
+          //pass the values from the previous step to the MemberStatus widget
           final memberStatus = MemberStatus(
             member: memberUname,
             isSafe: memberSafety,
@@ -405,6 +502,7 @@ class MembersStream extends StatelessWidget {
             getDetails: getMemberDetails,
           );
 
+          //add the MemmberStatus widget to a list made up of memberStatus widgets
           MembersStatuses.add(memberStatus);
         }
         return Expanded(
@@ -448,6 +546,7 @@ class MemberStatus extends StatelessWidget {
               ],
             ),
           ),
+          //if the user is safe, show a green check box and if not a red alert
           isSafe == true
               ? Icon(
                   Icons.check_box,
@@ -459,7 +558,7 @@ class MemberStatus extends StatelessWidget {
                   color: Colors.red,
                   size: 40,
                 ),
-          // isSafe== false  ? Text('Safe(Ignore)') : Text('$leaveGroup'),
+
           isMe == false && isSafe == false
               ? TextButton(
                   onPressed: () async {
@@ -474,11 +573,13 @@ class MemberStatus extends StatelessWidget {
                     var result = selected[0].data() as Map;
                     var safeID = selected[0].id;
                     safeTaps = result['safeTaps'];
+                    //checks if the button has already been clicked for this user to avoid one person clicking for both safeTaps
                     if (tapped == false) {
+                      //if the button has not been clicked, increses the safeTaps by 1 and sets the tapped to true such that the user cannot click this again
                       safeTaps = safeTaps + 1;
                       tapped = true;
+                      //if the safe taps are no equal to or greater than the min approvals, the user who was unsafe is now marked as safe, their safeTaps at
                       if (safeTaps >= minApprovals) {
-                        print(' safe Taps is true');
                         await _firestore
                             .collection("active_members")
                             .doc(memberID)
@@ -493,11 +594,14 @@ class MemberStatus extends StatelessWidget {
                             .update({
                           'safeTaps': 0,
                         });
+                        //sending notifications using the tokenID from the getMemberDetails function that was passed
                         _handleSendNotification(
                             tokenIDList,
                             '$username marked $member as safe',
-                            '$member had moved too far and $username has marked them as safe. \n If you are sure they are safe, please log in and click safe ignore on \n active group page ');
+                            '$member had moved too far and $username has marked them as safe. \n');
                       } else {
+                        //if the safe Taps are not equal to minimum approvals, , update the users safe Tap number and alert the person who clicked that
+                        //more safe taps are required.
                         await _firestore
                             .collection("groups")
                             .doc(groupID)
@@ -522,11 +626,13 @@ class MemberStatus extends StatelessWidget {
                             ],
                           ),
                         );
+                        //sending notifications to the rest of the group on more safe taps being needed.
                         _handleSendNotification(
                             tokenIDList,
                             '$username marked $member as safe',
                             '$member had moved too far and $username has marked them as safe. \n If you are sure they are safe, please log in and click safe ignore on \n active group page ');
                       }
+                      //if the user had already clicked the button, they are alerted that they cannot click it again
                     } else {
                       showDialog(
                         context: context,

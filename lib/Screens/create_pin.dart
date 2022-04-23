@@ -3,6 +3,11 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:salama/Components/icons.dart';
 import '../constants.dart';
 import 'repeat_pin.dart';
+import 'package:salama/models/getUser.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'active_group_screen.dart';
+
+final _firestore = FirebaseFirestore.instance;
 
 class CreatePin extends StatefulWidget {
   static String id = 'create_pin';
@@ -14,6 +19,38 @@ class CreatePin extends StatefulWidget {
 class _CreatePinState extends State<CreatePin> {
   TextEditingController textEditingController = TextEditingController();
   String currentText = "";
+  getDetails Details = getDetails();
+  String username;
+  String userID;
+  bool safety = true;
+
+  void isSafe () async {
+    try {
+      List<DocumentSnapshot> result = await Details.getUserDetail();
+      if (result.length > 0) {
+        var x = result[0].data() as Map;
+        setState(() {
+          userID = selected[0].id;
+          username = x['username'];
+        });
+        final QuerySnapshot user = await _firestore
+            .collection('active_members')
+            .where('username', isEqualTo: username)
+            .get();
+        final List<DocumentSnapshot> returned = user.docs;
+        print('Group details are $result');
+        setState(() {
+          safety = returned[0]['isSafe'];
+        });
+      }
+      } catch (e) {
+      print(e);
+    }
+  }
+  void initState() {
+    super.initState();
+    isSafe();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +79,8 @@ class _CreatePinState extends State<CreatePin> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: Container(
+      body: safety != false
+          ? Container(
         color: kBackgroundColour,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -85,6 +123,62 @@ class _CreatePinState extends State<CreatePin> {
             ),
             Menu(),
           ],
+        ),
+      ) : Padding(
+        padding: EdgeInsets.only(top: 120),
+        child: Container(
+          color: kBackgroundColour,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(25,15,25,0),
+                  child: Container(
+                    color: kMainColour,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 15.0),
+                            child: Text(
+                                'You cannot set a pin while unsafe in a group. Please ask \n your friends to mark you as safe for you to be able to set your pin'),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, ActiveGroup.id);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.amberAccent,
+                                  borderRadius: new BorderRadius.all(
+                                    const Radius.circular(30.0),
+                                  )),
+                              height: 50,
+                              width: 150.00,
+                              child: Center(
+                                child: Text(
+                                  'Go to Active Group',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Menu()
+            ],
+          ),
         ),
       ),
     );
