@@ -254,16 +254,14 @@ class _MainScreenState extends State<MainScreen> {
             var details = new Map();
             var result = locDets[0];
             final returned = result.data() as Map;
-            print(' member is $returned');
             LatLng destination = LatLng(
                 returned['location'].latitude, returned['location'].longitude);
             details['username'] = returned['username'];
-            print(details['username']);
             details['location'] = destination;
             setState(() {
               Members.add(details);
             });
-            print('Members are $Members');
+
 
             ++i;
           }
@@ -344,7 +342,6 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                     ),
                   ),
-                  Menu()
                 ],
               ),
             )

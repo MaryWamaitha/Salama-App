@@ -38,6 +38,7 @@ class _CreateGroupState extends State<CreateGroup> {
   LatLng destination;
   double latitude;
   double longi;
+  String status;
   String groupName;
   String safeWord = 'Not set';
   List<String> Users = [];
@@ -65,7 +66,6 @@ class _CreateGroupState extends State<CreateGroup> {
 
   addMember addition = addMember();
   void _handleSendNotification(
-
       List<String> playerID, String heading, String content) async {
     var deviceState = await OneSignal.shared.getDeviceState();
 
@@ -136,6 +136,7 @@ class _CreateGroupState extends State<CreateGroup> {
         final x = selected[0].data() as Map;
         userID = selected[0].id;
         creator = x['username'];
+        status = x['status'];
       }
     } catch (e) {
       print(e);
@@ -226,7 +227,8 @@ class _CreateGroupState extends State<CreateGroup> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: SingleChildScrollView(
+      body: status == 'active'
+          ? SingleChildScrollView(
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,6 +247,16 @@ class _CreateGroupState extends State<CreateGroup> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Center(
+                        child: Text(
+                          'Search for users',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(top: 12, left: 12),
                         child: Text(
@@ -317,7 +329,10 @@ class _CreateGroupState extends State<CreateGroup> {
                       Center(
                         child: Text(
                           'Group Members ',
-                          style: kMajorHeadings,
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w700,
+                          ),
                           textAlign: TextAlign.left,
                         ),
                       ),
@@ -405,15 +420,11 @@ class _CreateGroupState extends State<CreateGroup> {
                       ),
                       Row(
                         children: [
-                          Text(
-                            'Destination: ',
-                            style: kMajorHeadings,
-                          ),
                           place != null
                               ? Text(
-                                  '$place',
+                                  'Destination: $place',
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 16,
                                   ),
                                 )
                               : Text('')
@@ -433,36 +444,33 @@ class _CreateGroupState extends State<CreateGroup> {
                           Flexible(
                             child: IconButton(
                               onPressed: () {
-                                setState(() {
-                                  DistanceInfo =
-                                      'This is how far group members can move without triggering an\n alert. Once users go beyond this distance from the location, \n an alert is triggered';
-                                });
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text('Tracking Distance'),
+                                    content: Text(
+                                      'This is how far group members can move without triggering an alert. Once users go beyond this distance from the location, an alert is sent to all group members.\nYou can either select a distance from the drop down or '
+                                          'click the button to use the system set',
+                                      textAlign: TextAlign.left,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                        },
+                                        child: Text('Okay'),
+                                      )
+                                    ],
+                                  ),
+                                );
                               },
-                              icon: Icon(Icons.arrow_downward),
+                              icon: Icon(Icons.info_outline_rounded),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                DistanceInfo = '';
-                              });
-                            },
-                            icon: Icon(Icons.arrow_upward),
                           ),
                         ],
                       ),
-                      DistanceInfo != ''
-                          ? Row(
-                              children: [
-                                Text(
-                                  '$DistanceInfo',
-                                  style: TextStyle(
-                                    fontSize: 13.0,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Text('Select distance below'),
+
+
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Container(
@@ -507,23 +515,30 @@ class _CreateGroupState extends State<CreateGroup> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                SafeWordDetails =
-                                    ' This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around but is only known to you and your group members';
-                              });
-                            },
-                            icon: Icon(Icons.arrow_downward),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                SafeWordDetails =
-                                    'Click down arrow to learn more';
-                              });
-                            },
-                            icon: Icon(Icons.arrow_upward),
+                          Flexible(
+                            child: IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text('Tracking Distance'),
+                                    content: Text(
+                                      'This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around as friends are checking in. The group members need to enter their pin to see it',
+                                      textAlign: TextAlign.justify,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                        },
+                                        child: Text('Okay'),
+                                      )
+                                    ],
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.info_outline_rounded),
+                            ),
                           ),
                         ],
                       ),
@@ -686,8 +701,10 @@ class _CreateGroupState extends State<CreateGroup> {
                               });
                               var documentId = docRef.id;
                               await _firestore
-                                  .collection("groups").doc(documentId)
-                                  .collection("safeTaps").add({
+                                  .collection("groups")
+                                  .doc(documentId)
+                                  .collection("safeTaps")
+                                  .add({
                                 'username': creator,
                                 'safeTaps': 0,
                               });
@@ -715,13 +732,12 @@ class _CreateGroupState extends State<CreateGroup> {
                                   'destination': place,
                                 });
                                 List<String> tokenList = [];
-                              tokenList.add(invite['tokenID'].toString());
+                                tokenList.add(invite['tokenID'].toString());
                                 print('the token ID is $tokenList');
                                 _handleSendNotification(
                                     tokenList,
                                     '$username has invited you to join $groupName',
-                                    '$creator has invited you to join group to $place. \n To accept invite, please go to invites page '
-                                );
+                                    '$creator has invited you to join group to $place. \n To accept invite, please go to invites page ');
                               }
                               Navigator.pushNamed(context, ActiveGroup.id);
                             } catch (e) {
@@ -729,7 +745,8 @@ class _CreateGroupState extends State<CreateGroup> {
                                 context: context,
                                 builder: (ctx) => AlertDialog(
                                   title: Text(' Ops! Group creation Failed'),
-                                  content: Text('The group creation wasnt successful'),
+                                  content: Text(
+                                      'The group creation wasnt successful'),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
@@ -765,9 +782,60 @@ class _CreateGroupState extends State<CreateGroup> {
                   ),
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Menu(),
+            ],
+          ),
+        ),
+      ) :
+      Padding(
+        padding: EdgeInsets.only(top: 120),
+        child: Container(
+          color: kBackgroundColour,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(25,15,25,0),
+                  child: Container(
+                    color: kMainColour,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(15.0),
+                            child: Text(
+                              'You are already in a group, click below to go to your group',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, ActiveGroup.id);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.amberAccent,
+                                borderRadius: new BorderRadius.all(
+                                  const Radius.circular(30.0),
+                                )),
+                            height: 50,
+                            width: 150.00,
+                            child: Center(
+                              child: Text(
+                                'Go to Group',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

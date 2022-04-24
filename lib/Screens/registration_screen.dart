@@ -1,3 +1,4 @@
+import 'package:salama/Screens/bottommenu.dart';
 import 'package:salama/constants.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'main_screen.dart';
@@ -282,7 +283,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               if (newUser != null) {
                                 showSpinner = false;
                                 //once the process happens successfully, the user is redirected to the main screen
-                                Navigator.pushNamed(context, MainScreen.id);
+                                Navigator.pushNamed(context, HomePage.id);
                               }
                             } on FirebaseAuthException catch (e) {
                               //if an error pops up during the process, it is displayed in a dialog box

@@ -84,12 +84,13 @@ class _ActiveGroupState extends State<ActiveGroup> {
   getDetails Details = getDetails();
   static const fetchBackground = "fetchBackground";
 
-  //the following function runs the activating function and initializes the trackingTimer
+  //the following function runs the activating function and also the tracking instructions if the app
+  //is in the background
   void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
       switch (task) {
         case fetchBackground:
-          startLocating();
+          getUserLocation();
           if (tracking == false) {
             Timer.periodic(Duration(seconds: 60), (timer) async {
               var value = calcDist.trackingUser(
@@ -101,12 +102,45 @@ class _ActiveGroupState extends State<ActiveGroup> {
                 });
                 tracking = true;
                 timer.cancel();
-                trackingTimer();
-                print('value is updateed and timer cancelled $tracking');
+                var value = calcDist.trackingUser(
+                    userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
+                //if the user is not safe ( tracking User function returned a false)
+                //the isSafe value is updated in the database as false ( this also changes the icon colour)
+                if (value == false) {
+                  await _firestore.collection("active_members").doc(activeID).update({
+                    'isSafe': false,
+                  });
+                  //this checks if the notification had been previously sent
+                  //false means a  notification has not been sent and true means this particular instance of the notification has been sent
+                  if (sent == false) {
+                    triggerNotification();
+                  }
+                } else {
+                  await _firestore.collection("active_members").doc(activeID).update({
+                    'isSafe': true,
+                  });
+                }
               }
             });
           } else {
-            trackingTimer();
+            var value = calcDist.trackingUser(
+                userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
+            //if the user is not safe ( tracking User function returned a false)
+            //the isSafe value is updated in the database as false ( this also changes the icon colour)
+            if (value == false) {
+              await _firestore.collection("active_members").doc(activeID).update({
+                'isSafe': false,
+              });
+              //this checks if the notification had been previously sent
+              //false means a  notification has not been sent and true means this particular instance of the notification has been sent
+              if (sent == false) {
+                triggerNotification();
+              }
+            } else {
+              await _firestore.collection("active_members").doc(activeID).update({
+                'isSafe': true,
+              });
+            }
           }
           break;
       }
@@ -408,7 +442,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
                           ),
                         ),
                       ),
-                      Menu(),
                     ]),
               )
         //if the user is not active in any group, they are informed that they are not in any group
@@ -464,7 +497,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
                     ),
                   ),
                 ),
-                Menu()
               ],
             ),
           ),

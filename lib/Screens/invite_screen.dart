@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:salama/Screens/create_group_screen.dart';
 import 'package:salama/Screens/settings.dart';
 import 'main_screen.dart';
 import 'package:geocoding/geocoding.dart';
@@ -9,6 +10,7 @@ import 'active_group_screen.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:salama/Components/icons.dart';
 
 
 final _firestore = FirebaseFirestore.instance;
@@ -159,6 +161,7 @@ class _InviteState extends State<Invite> {
     street = placeMark.street;
     print(' place is $street');
   }
+
 
   @override
   void initState() {
@@ -396,9 +399,62 @@ class _InviteState extends State<Invite> {
                 ),
               ),
             )
-          : Container(
-              child: Text('No Groups available'),
-            ),
+          : Padding(
+        padding: EdgeInsets.only(top: 120),
+        child: Container(
+          color: kBackgroundColour,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(25,15,25,0),
+                  child: Container(
+                    color: kMainColour,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(15.0),
+                            child: Text(
+                                'You do not have any invites. You can create '
+                                    'a group and send invites by clicking the button below',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, CreateGroup.id);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.amberAccent,
+                                borderRadius: new BorderRadius.all(
+                                  const Radius.circular(30.0),
+                                )),
+                            height: 50,
+                            width: 150.00,
+                            child: Center(
+                              child: Text(
+                                'Create Group',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
