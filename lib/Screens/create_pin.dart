@@ -85,39 +85,52 @@ class _CreatePinState extends State<CreatePin> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(30),
-              child: Center(
-                child: PinCodeTextField(
-                  length: 4,
-                  obscureText: false,
-                  animationType: AnimationType.fade,
-                  pinTheme: PinTheme(
-                    shape: PinCodeFieldShape.box,
-                    borderRadius: BorderRadius.circular(5),
-                    fieldHeight: 50,
-                    fieldWidth: 40,
-                    activeFillColor: Colors.black26,
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10,40,10,30),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white70,
+                      borderRadius: new BorderRadius.all(
+                        const Radius.circular(30.0),
+                      )
                   ),
-                  animationDuration: const Duration(milliseconds: 300),
-                  backgroundColor: Colors.blue.shade50,
-                  enableActiveFill: true,
-                  controller: textEditingController,
-                  onCompleted: (v) {
-                    Navigator.pushNamed(context, RepeatPin.id, arguments: {
-                      "pin": currentText,
-                    });
-                  },
-                  onChanged: (value) {
-                    debugPrint(value);
-                    setState(() {
-                      currentText = value;
-                    });
-                  },
-                  beforeTextPaste: (text) {
-                    return true;
-                  },
-                  appContext: context,
+                  child: Padding(
+                    padding: const EdgeInsets.all(30),
+                    child: Center(
+                      child: PinCodeTextField(
+                        length: 4,
+                        keyboardType: TextInputType.number,
+                        obscureText: false,
+                        animationType: AnimationType.fade,
+                        pinTheme: PinTheme(
+                          shape: PinCodeFieldShape.box,
+                          inactiveColor: Colors.green,
+                          activeFillColor: Colors.green,
+                          fieldHeight: 50,
+                          fieldWidth: 40,
+                          selectedFillColor: Colors.yellow,
+                        ),
+                        animationDuration: const Duration(milliseconds: 300),
+                        controller: textEditingController,
+                        onCompleted: (v) {
+                          Navigator.pushNamed(context, RepeatPin.id, arguments: {
+                            "pin": currentText,
+                          });
+                        },
+                        onChanged: (value) {
+                          debugPrint(value);
+                          setState(() {
+                            currentText = value;
+                          });
+                        },
+                        beforeTextPaste: (text) {
+                          return true;
+                        },
+                        appContext: context,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

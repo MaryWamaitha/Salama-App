@@ -2,19 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/Screens/active_group_screen.dart';
+import 'package:salama/Screens/create_pin.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import 'dart:math';
-import 'main_screen.dart';
+
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:google_maps_webservice/places.dart';
-import '../Components/icons.dart';
-import 'invite_screen.dart';
+import 'settings.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:firebase_core/firebase_core.dart';
 import '../models/add_member.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
@@ -39,6 +37,7 @@ class _CreateGroupState extends State<CreateGroup> {
   double latitude;
   double longi;
   String status;
+  int setPin;
   String groupName;
   String safeWord = 'Not set';
   List<String> Users = [];
@@ -137,6 +136,12 @@ class _CreateGroupState extends State<CreateGroup> {
         userID = selected[0].id;
         creator = x['username'];
         status = x['status'];
+        final QuerySnapshot record = await _firestore
+            .collection('pins')
+            .where('userID', isEqualTo: userID)
+            .get();
+        final List<DocumentSnapshot> found = record.docs;
+        setPin = found.length;
       }
     } catch (e) {
       print(e);
@@ -739,7 +744,28 @@ class _CreateGroupState extends State<CreateGroup> {
                                     '$username has invited you to join $groupName',
                                     '$creator has invited you to join group to $place. \n To accept invite, please go to invites page ');
                               }
-                              Navigator.pushNamed(context, ActiveGroup.id);
+                              if ( setPin == 0){
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text('Set pin'),
+                                    content: Text(
+                                        'Hey there, you do not have a pin. Please set your pin in settings You will need the pin to leave your groups yourself'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                              context, CreatePin.id);
+                                        },
+                                        child: Text('Okay'),
+                                      )
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                Navigator.pushNamed(
+                                    context, ActiveGroup.id);
+                              }
                             } catch (e) {
                               showDialog(
                                 context: context,

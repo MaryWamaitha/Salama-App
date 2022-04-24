@@ -49,19 +49,19 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.fromLTRB(10.0, 40, 10, 10),
             child: Column(
               children: [
+                // settingsItems(
+                //   mainText: 'Emergency Contacts',
+                //   explanation:
+                //       'Edit your emergency contacts, add new ones \n or delete existing ones here',
+                //   page: EmergencyContact.id,
+                // ),
+                // SizedBox(
+                //   height: 60,
+                // ),
                 settingsItems(
-                  mainText: 'Emergency Contacts',
+                  mainText: 'Safety Pin',
                   explanation:
-                      'Edit your emergency contacts, add new ones \n or delete existing ones here',
-                  page: EmergencyContact.id,
-                ),
-                SizedBox(
-                  height: 60,
-                ),
-                settingsItems(
-                  mainText: 'Security Code',
-                  explanation:
-                      'Set your security code which you need to \n leave groups',
+                      'Set your security code which you need to leave groups and \n for viewing safe words',
                   page: CreatePin.id,
                 ),
               ],

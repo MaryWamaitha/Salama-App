@@ -108,67 +108,75 @@ class _LeaveGroupState extends State<LeaveGroup> {
           ? Expanded(
               child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(30),
-                    child: Center(
-                      child: PinCodeTextField(
-                        length: 4,
-                        obscureText: false,
-                        animationType: AnimationType.fade,
-                        pinTheme: PinTheme(
-                          shape: PinCodeFieldShape.box,
-                          borderRadius: BorderRadius.circular(5),
-                          fieldHeight: 50,
-                          fieldWidth: 40,
-                          activeFillColor: Colors.black26,
-                        ),
-                        animationDuration: const Duration(milliseconds: 300),
-                        backgroundColor: Colors.blue.shade50,
-                        enableActiveFill: true,
-                        controller: textEditingController,
-                        onCompleted: (v) async {
-                          if (pin != currentText) {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: Text(' Pins dont match'),
-                                content: Text(
-                                    'The pin entered does not much the password on record'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(ctx).pop();
-                                    },
-                                    child: Text('Okay'),
-                                  )
-                                ],
-                              ),
-                            );
-                          } else {
-                            await _firestore
-                                .collection("active_members")
-                                .doc(activeID)
-                                .delete();
-                            await _firestore
-                                .collection("users")
-                                .doc(userID)
-                                .update({
-                              'status': 'inactive',
+                  Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white70,
+                        borderRadius: new BorderRadius.all(
+                          const Radius.circular(30.0),
+                        )
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(30),
+                      child: Center(
+                        child: PinCodeTextField(
+                          length: 4,
+                          obscureText: false,
+                          keyboardType: TextInputType.number,
+                          animationType: AnimationType.fade,
+                          pinTheme: PinTheme(
+                            shape: PinCodeFieldShape.box,
+                            inactiveColor: Colors.green,
+                            activeFillColor: Colors.green,
+                            fieldHeight: 50,
+                            fieldWidth: 40,
+                            selectedFillColor: Colors.yellow,
+                          ),
+                          animationDuration: const Duration(milliseconds: 300),
+                          controller: textEditingController,
+                          onCompleted: (v) async {
+                            if (pin != currentText) {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(' Pins dont match'),
+                                  content: Text(
+                                      'The pin entered does not much the password on record'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                      },
+                                      child: Text('Okay'),
+                                    )
+                                  ],
+                                ),
+                              );
+                            } else {
+                              await _firestore
+                                  .collection("active_members")
+                                  .doc(activeID)
+                                  .delete();
+                              await _firestore
+                                  .collection("users")
+                                  .doc(userID)
+                                  .update({
+                                'status': 'inactive',
+                              });
+                              Navigator.pushNamed(context, MainScreen.id);
+                            }
+                          },
+                          onChanged: (value) {
+                            debugPrint(value);
+                            setState(() {
+                              currentText = value;
+                              print('the current data is $currentText');
                             });
-                            Navigator.pushNamed(context, MainScreen.id);
-                          }
-                        },
-                        onChanged: (value) {
-                          debugPrint(value);
-                          setState(() {
-                            currentText = value;
-                            print('the current data is $currentText');
-                          });
-                        },
-                        beforeTextPaste: (text) {
-                          return true;
-                        },
-                        appContext: context,
+                          },
+                          beforeTextPaste: (text) {
+                            return true;
+                          },
+                          appContext: context,
+                        ),
                       ),
                     ),
                   ),

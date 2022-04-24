@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:salama/Screens/create_group_screen.dart';
+import 'package:salama/Screens/create_pin.dart';
 import 'package:salama/Screens/settings.dart';
 import 'main_screen.dart';
 import 'package:geocoding/geocoding.dart';
@@ -62,7 +63,6 @@ class _InviteState extends State<Invite> {
             .where('email', isEqualTo: member1)
             .get();
         final List<DocumentSnapshot> selected = activity.docs;
-        //TODO: What happens if invite does not exist
         if (selected.length > 0) {
           var x = selected[0].data() as Map;
           username = x['username'];
@@ -135,9 +135,7 @@ class _InviteState extends State<Invite> {
           print(username);
         } else {
           var notPresent = true;
-          //TODO: What happens when a user does not have an invite
           Navigator.pushNamed(context, ActiveGroup.id);
-          print('Document does not exist on the database');
         }
       });
       ++i;
@@ -330,7 +328,7 @@ class _InviteState extends State<Invite> {
                                                   TextButton(
                                                     onPressed: () {
                                                       Navigator.pushNamed(
-                                                          context, SettingsPage.id);
+                                                          context, CreatePin.id);
                                                     },
                                                     child: Text('Okay'),
                                                   )
