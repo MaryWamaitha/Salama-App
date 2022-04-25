@@ -14,6 +14,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../models/calculateDistance.dart';
 import '../models/getUser.dart';
 import 'package:salama/Screens/leave_group.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 final _firestore = FirebaseFirestore.instance;
 String username;
@@ -64,7 +65,7 @@ class ActiveGroup extends StatefulWidget {
 class _ActiveGroupState extends State<ActiveGroup> {
   final _auth = FirebaseAuth.instance;
   String sender;
-  bool showSpinner = false;
+  bool showSpinner = true;
   String userID;
   String groupName;
   LatLng destination;
@@ -93,21 +94,27 @@ class _ActiveGroupState extends State<ActiveGroup> {
           getUserLocation();
           if (tracking == false) {
             Timer.periodic(Duration(seconds: 60), (timer) async {
-              var value = calcDist.trackingUser(
-                  userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
+              var value = calcDist.trackingUser(userLatitude, userLongitude,
+                  groupLatitude, groupLongitude, 1000);
               //if the activity is now true, updating the tracking field in database and switching of timer
               if (value == true) {
-                await _firestore.collection("active_members").doc(activeID).update({
+                await _firestore
+                    .collection("active_members")
+                    .doc(activeID)
+                    .update({
                   'tracking': true,
                 });
                 tracking = true;
                 timer.cancel();
-                var value = calcDist.trackingUser(
-                    userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
+                var value = calcDist.trackingUser(userLatitude, userLongitude,
+                    groupLatitude, groupLongitude, Distance);
                 //if the user is not safe ( tracking User function returned a false)
                 //the isSafe value is updated in the database as false ( this also changes the icon colour)
                 if (value == false) {
-                  await _firestore.collection("active_members").doc(activeID).update({
+                  await _firestore
+                      .collection("active_members")
+                      .doc(activeID)
+                      .update({
                     'isSafe': false,
                   });
                   //this checks if the notification had been previously sent
@@ -116,19 +123,25 @@ class _ActiveGroupState extends State<ActiveGroup> {
                     triggerNotification();
                   }
                 } else {
-                  await _firestore.collection("active_members").doc(activeID).update({
+                  await _firestore
+                      .collection("active_members")
+                      .doc(activeID)
+                      .update({
                     'isSafe': true,
                   });
                 }
               }
             });
           } else {
-            var value = calcDist.trackingUser(
-                userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
+            var value = calcDist.trackingUser(userLatitude, userLongitude,
+                groupLatitude, groupLongitude, Distance);
             //if the user is not safe ( tracking User function returned a false)
             //the isSafe value is updated in the database as false ( this also changes the icon colour)
             if (value == false) {
-              await _firestore.collection("active_members").doc(activeID).update({
+              await _firestore
+                  .collection("active_members")
+                  .doc(activeID)
+                  .update({
                 'isSafe': false,
               });
               //this checks if the notification had been previously sent
@@ -137,7 +150,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
                 triggerNotification();
               }
             } else {
-              await _firestore.collection("active_members").doc(activeID).update({
+              await _firestore
+                  .collection("active_members")
+                  .doc(activeID)
+                  .update({
                 'isSafe': true,
               });
             }
@@ -173,12 +189,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
             .get();
         //once we find the record, we get the groupID from it. The group ID is used in loading the stream
         final List<DocumentSnapshot> groupDets = user.docs;
-          var record = groupDets[0].data() as Map;
-          groupID = record['gid'];
-          var Notifystatus = await OneSignal.shared.getDeviceState();
-          String tokenId = Notifystatus.userId;
-          print(' the token ID is $tokenId');
-
+        var record = groupDets[0].data() as Map;
+        groupID = record['gid'];
+        var Notifystatus = await OneSignal.shared.getDeviceState();
+        String tokenId = Notifystatus.userId;
       }
     } catch (e) {
       print(e);
@@ -200,23 +214,23 @@ class _ActiveGroupState extends State<ActiveGroup> {
       if (result.length > 0) {
         //changing the returned data to a map so that we can read it
         var x = result[0].data() as Map;
-          setState(() {
-            //getting the user location from the database and putting it in a local variable
-            userLocation =
-                LatLng(x['location'].latitude, x['location'].longitude);
-            userLatitude = x['location'].latitude;
-            userLongitude = x['location'].longitude;
-          });
+        setState(() {
+          //getting the user location from the database and putting it in a local variable
+          userLocation =
+              LatLng(x['location'].latitude, x['location'].longitude);
+          userLatitude = x['location'].latitude;
+          userLongitude = x['location'].longitude;
+        });
       }
     } catch (e) {
       print(e);
     }
   }
 
- //getting group details which are displayed on the page
+  //getting group details which are displayed on the page
   void getGroupDetails() async {
     //using the GID to get group details
-        _firestore
+    _firestore
         .collection('groups')
         .doc(groupID)
         .get()
@@ -232,11 +246,15 @@ class _ActiveGroupState extends State<ActiveGroup> {
           groupLongitude = details['Location'].longitude;
           destination = LatLng(
               details['Location'].latitude, details['Location'].longitude);
+          showSpinner = false;
+        });
+      } else {
+        setState(() {
+          showSpinner = false;
         });
       }
     });
   }
-
 
   //if a user is unsafe, this function is run
   //the function uses the group ID to get a list of all active_mmebers with the same groupID
@@ -262,7 +280,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
       var token = output['tokenID'];
       //adding the token to an empty list ( oneSignel uses lists of tokenId)
       memberTokens.add(token);
-     //sending notifications to the specific user
+      //sending notifications to the specific user
       _handleSendNotification(memberTokens, '$username is unsafe. ',
           '$username has moved away from $place beyond specified distance. Please check in');
       //incrementing the index and repeating process
@@ -296,7 +314,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
     } else {
       //if the user tracking was already true, run the trackingTimer immediatly
       trackingTimer();
-      // print('value is updateed and timer cancelled $tracking');
+      // print('value is updated and timer cancelled $tracking');
     }
   }
 
@@ -353,33 +371,35 @@ class _ActiveGroupState extends State<ActiveGroup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: kBackgroundColour,
-        appBar: PreferredSize(
-            preferredSize: Size.fromHeight(120.0),
-            child: AppBar(
-              automaticallyImplyLeading: false,
-              shape: ContinuousRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(120),
-                  bottomRight: Radius.circular(120),
-                ),
+      backgroundColor: kBackgroundColour,
+      appBar: PreferredSize(
+          preferredSize: Size.fromHeight(120.0),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            shape: ContinuousRectangleBorder(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(120),
+                bottomRight: Radius.circular(120),
               ),
-              title: Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 50.0, bottom: 10),
-                  child: Text(
-                    'ACTIVE GROUP',
-                    style: TextStyle(
-                      fontSize: 25,
-                    ),
+            ),
+            title: Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 50.0, bottom: 10),
+                child: Text(
+                  'ACTIVE GROUP',
+                  style: TextStyle(
+                    fontSize: 25,
                   ),
                 ),
               ),
-              backgroundColor: kMainColour,
-            )),
-        //if the user status is active, the UI loads stream, leave group button etc
-        body: status == 'active'
-            ? SafeArea(
+            ),
+            backgroundColor: kMainColour,
+          )),
+      //if the user status is active, the UI loads stream, leave group button etc
+      body: status == 'active' && groupName != null
+          ? ModalProgressHUD(
+              inAsyncCall: showSpinner,
+              child: SafeArea(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -443,64 +463,68 @@ class _ActiveGroupState extends State<ActiveGroup> {
                         ),
                       ),
                     ]),
-              )
-        //if the user is not active in any group, they are informed that they are not in any group
-            : Padding(
-          padding: EdgeInsets.only(top: 120),
-          child: Container(
-            color: kBackgroundColour,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(25,15,25,0),
-                    child: Container(
-                      color: kMainColour,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 15.0),
-                              child: Text(
-                                  'You are not in any group. '),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, CreateGroup.id);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.amberAccent,
-                                    borderRadius: new BorderRadius.all(
-                                      const Radius.circular(30.0),
-                                    )),
-                                height: 50,
-                                width: 150.00,
-                                child: Center(
+              ),
+            )
+          //if the user is not active in any group, they are informed that they are not in any group
+          : Padding(
+              padding: EdgeInsets.only(top: 120),
+              child: Container(
+                color: kBackgroundColour,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
+                        child: Container(
+                          color: kMainColour,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 15.0),
                                   child: Text(
-                                    'Click here to create a group',
-                                    style: TextStyle(
-                                      color: Colors.black,
+                                    'You are not in any group. Click the button below to create a group ',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, CreateGroup.id);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      60.0, 10, 60, 20),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.amberAccent,
+                                        borderRadius: new BorderRadius.all(
+                                          const Radius.circular(30.0),
+                                        )),
+                                    height: 50,
+                                    width: 150.00,
+                                    child: Center(
+                                      child: Text(
+                                        'Create a group',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
     );
   }
 }

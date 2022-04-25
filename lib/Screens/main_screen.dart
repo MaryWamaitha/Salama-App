@@ -6,7 +6,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../Components/icons.dart';
+import 'package:permission_handler/permission_handler.dart' as perm;
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
@@ -51,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
             _location = _locationData;
           });
           if (status == 'active') {
-            // if a user is acrive, save their location to database anytime it is changed
+            // if a user is active, save their location to database anytime it is changed
             await _firestore.collection("users").doc(docuID).update({
               'location': GeoPoint(_location.latitude, _location.longitude),
             });
@@ -60,6 +60,25 @@ class _MainScreenState extends State<MainScreen> {
       }
       return Future.value(true);
     });
+  }
+
+  //getting location permissions
+  Future<void> requestLocationPermission() async {
+
+    final serviceStatusLocation = await perm.Permission.locationWhenInUse.isGranted ;
+
+    bool isLocation = serviceStatusLocation == ServiceStatus.enabled;
+
+    final status = await perm.Permission.locationWhenInUse.request();
+
+    if (status == perm.PermissionStatus.granted) {
+      print('Permission Granted');
+    } else if (status == perm.PermissionStatus.denied) {
+      print('Permission denied');
+    } else if (status == perm.PermissionStatus.permanentlyDenied) {
+      print('Permission Permanently Denied');
+      await perm.openAppSettings();
+    }
   }
 
   Future getUserLocation() async {
@@ -118,8 +137,8 @@ class _MainScreenState extends State<MainScreen> {
 
 
   void _onMapCreated(GoogleMapController _cntlr) async {
-    getGroupMembers;
     getUserLocation();
+    getGroupMembers();
     _controller = _cntlr;
     _controller.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -261,8 +280,6 @@ class _MainScreenState extends State<MainScreen> {
             setState(() {
               Members.add(details);
             });
-
-
             ++i;
           }
         }
@@ -272,7 +289,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  //TODO: find why the location is updating for all users instead of the logged in user only
+
   void trackingMembers() {
     Timer.periodic(Duration(seconds: 10), (timer) async {
       getGroupMembers();
@@ -283,6 +300,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    requestLocationPermission;
     getCurrentUser();
     getUserLocation();
     trackingMembers();

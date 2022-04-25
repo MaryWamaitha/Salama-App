@@ -232,7 +232,7 @@ class _CreateGroupState extends State<CreateGroup> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: status == 'active'
+      body: status == 'inactive' || status == null
           ? SingleChildScrollView(
         child: SafeArea(
           child: Column(
