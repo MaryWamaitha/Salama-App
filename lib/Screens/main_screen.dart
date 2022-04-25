@@ -11,8 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
 import 'package:workmanager/workmanager.dart';
-
-
+import 'package:flutter_animarker/flutter_map_marker_animation.dart';
 
 class MainScreen extends StatefulWidget {
   static String id = 'main_screen';
@@ -27,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   Position _location;
   int selectedPage = 0;
   String username;
-  List<Map> Members = [];
+  List<Map> Members = null;
   LatLng userLocation;
   String status;
   String docuID;
@@ -55,7 +54,8 @@ class _MainScreenState extends State<MainScreen> {
             await _firestore.collection("users").doc(docuID).update({
               'location': GeoPoint(_location.latitude, _location.longitude),
             });
-          };
+          }
+          ;
           break;
       }
       return Future.value(true);
@@ -64,8 +64,8 @@ class _MainScreenState extends State<MainScreen> {
 
   //getting location permissions
   Future<void> requestLocationPermission() async {
-
-    final serviceStatusLocation = await perm.Permission.locationWhenInUse.isGranted ;
+    final serviceStatusLocation =
+        await perm.Permission.locationWhenInUse.isGranted;
 
     bool isLocation = serviceStatusLocation == ServiceStatus.enabled;
 
@@ -123,8 +123,8 @@ class _MainScreenState extends State<MainScreen> {
       await _firestore.collection("users").doc(docuID).update({
         'location': GeoPoint(_location.latitude, _location.longitude),
       });
-    };
-
+    }
+    ;
   }
 
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
@@ -134,7 +134,6 @@ class _MainScreenState extends State<MainScreen> {
     accuracy: LocationAccuracy.bestForNavigation,
   );
   // final Set<Marker> _markers = {};
-
 
   void _onMapCreated(GoogleMapController _cntlr) async {
     getUserLocation();
@@ -147,6 +146,7 @@ class _MainScreenState extends State<MainScreen> {
           zoom: 15.0,
         ),
       ),
+
     );
 
     StreamSubscription<Position> positionStream =
@@ -168,22 +168,31 @@ class _MainScreenState extends State<MainScreen> {
       );
 
       _markers.removeWhere((m) => m.markerId.value == '$username');
-      _markers.add(Marker(
-        markerId: MarkerId('$username'),
-        position: LatLng(position.latitude, position.longitude),
-        infoWindow: InfoWindow(
-          title: '$username',
-        ),
-      ));
+      setState(() {
+        _markers.add(
+          Marker(
+            draggable: true,
+            markerId: MarkerId('$username'),
+            position: LatLng(position.latitude, position.longitude),
+            infoWindow: InfoWindow(
+              title: '$username',
+            ),
+
+          ),
+        );
+      });
       for (Map member in Members) {
         _markers.removeWhere((m) => m.markerId.value == member['username']);
-        _markers.add(Marker(
-          markerId: MarkerId(member['username']),
-          position: member['location'],
-          infoWindow: InfoWindow(
-            title: member['username'],
+        _markers.add(
+            RippleMarker(
+            markerId: MarkerId(member['username']),
+            position: member['location'],
+            infoWindow: InfoWindow(
+              title: member['username'],
+            ),
+            ripple: true,
           ),
-        ));
+        );
       }
     });
   }
@@ -213,16 +222,15 @@ class _MainScreenState extends State<MainScreen> {
             docuID = selected[0].id;
             status = x['status'];
           });
-         var tokenID= x['tokenID'];
+          var tokenID = x['tokenID'];
           OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
           var Notifystatus = await OneSignal.shared.getDeviceState();
           String deviceTokenID = Notifystatus.userId;
-         if (tokenID != deviceTokenID ){
-           _firestore.collection("users").doc(docuID).update({
-             'tokenID': deviceTokenID,
-           });
-         }
-
+          if (tokenID != deviceTokenID) {
+            _firestore.collection("users").doc(docuID).update({
+              'tokenID': deviceTokenID,
+            });
+          }
         }
         getGroupMembers();
       }
@@ -231,13 +239,10 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
   void getGroupMembers() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
-      //Todo: Add a condition here of what happens if the group ID is null
-
       final QuerySnapshot activity = await _firestore
           .collection('active_members')
           .where('username', isEqualTo: username)
@@ -289,7 +294,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-
   void trackingMembers() {
     Timer.periodic(Duration(seconds: 10), (timer) async {
       getGroupMembers();
@@ -301,6 +305,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     requestLocationPermission;
+
     getCurrentUser();
     getUserLocation();
     trackingMembers();
@@ -315,7 +320,6 @@ class _MainScreenState extends State<MainScreen> {
       frequency: Duration(minutes: 15),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
