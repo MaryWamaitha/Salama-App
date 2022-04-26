@@ -11,8 +11,9 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_animarker/flutter_map_marker_animation.dart';
-import '../Components/marker_icon_generator.dart';
+// import '../Components/marker_icon_generator.dart';
 import '../models/getUser.dart';
+import 'package:salama/Components/marker_generator.dart';
 
 class MainScreen extends StatefulWidget {
   static String id = 'main_screen';
@@ -38,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
   final messageTextController = TextEditingController();
   String email;
   String messageText;
-  MarkerGenerator mark = MarkerGenerator(0.5);
+  markerGenerator mark = markerGenerator();
   getDetails Details = getDetails();
   static const fetchBackground = "fetchBackground";
 
@@ -171,11 +172,17 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
-      
+
 
       // final bitmapDescriptor = await mark.createBitmapDescriptorFromIconData(
       //     Icons.import_contacts, Colors.amber, Colors.white, Colors.black);
       _markers.removeWhere((m) => m.markerId.value == '$username');
+      var letter = '${username[0]}'.toUpperCase();
+      String image = mark.getWeatherIcon(letter);
+      BitmapDescriptor markerbitmap = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(size: Size(22, 40)),
+        "$image",
+      );
       setState(() {
         _markers.add (
           Marker(
@@ -185,20 +192,26 @@ class _MainScreenState extends State<MainScreen> {
             infoWindow: InfoWindow(
               title: '$username',
             ),
-            icon: BitmapDescriptor.defaultMarkerWithHue(10),
+            icon:markerbitmap,
           ),
         );
       });
       for (Map member in Members) {
+        var letter = '${member['username'][0]}'.toUpperCase();
+        String image = mark.getWeatherIcon(letter);
+        BitmapDescriptor markerbitmap = await BitmapDescriptor.fromAssetImage(
+          ImageConfiguration(size: Size(22, 40)),
+          "$image",
+        );
         _markers.removeWhere((m) => m.markerId.value == member['username']);
         _markers.add(
-          RippleMarker(
+          Marker(
             markerId: MarkerId(member['username']),
             position: member['location'],
             infoWindow: InfoWindow(
               title: member['username'],
             ),
-            ripple: true,
+            icon: markerbitmap,
           ),
         );
       }
