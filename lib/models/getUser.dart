@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 User loggedInUser;
-final _auth = FirebaseAuth.instance;
 LatLng userLocation;
 double userLatitude;
 final _firestore = FirebaseFirestore.instance;
@@ -11,6 +10,7 @@ Map userDets;
 List<DocumentSnapshot> selected;
 
 class getDetails {
+  final _auth = FirebaseAuth.instance;
   Future <List<DocumentSnapshot>> getUserDetail() async {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in

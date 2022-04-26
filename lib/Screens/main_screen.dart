@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../constants.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -12,6 +11,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_animarker/flutter_map_marker_animation.dart';
+import '../Components/marker_icon_generator.dart';
+import '../models/getUser.dart';
 
 class MainScreen extends StatefulWidget {
   static String id = 'main_screen';
@@ -37,9 +38,11 @@ class _MainScreenState extends State<MainScreen> {
   final messageTextController = TextEditingController();
   String email;
   String messageText;
-
+  MarkerGenerator mark = MarkerGenerator(0.5);
+  getDetails Details = getDetails();
   static const fetchBackground = "fetchBackground";
 
+  //initiating background task for getting location
   void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
       switch (task) {
@@ -80,6 +83,8 @@ class _MainScreenState extends State<MainScreen> {
       await perm.openAppSettings();
     }
   }
+
+  //getting user location
 
   Future getUserLocation() async {
     bool serviceEnabled;
@@ -146,12 +151,11 @@ class _MainScreenState extends State<MainScreen> {
           zoom: 15.0,
         ),
       ),
-
     );
 
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
-            .listen((Position position) {
+            .listen((Position position) async {
       if (status == 'active') {
         // if a user is active, save their location to database anytime it is changed
         _firestore.collection("users").doc(docuID).update({
@@ -167,9 +171,13 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
+      
+
+      // final bitmapDescriptor = await mark.createBitmapDescriptorFromIconData(
+      //     Icons.import_contacts, Colors.amber, Colors.white, Colors.black);
       _markers.removeWhere((m) => m.markerId.value == '$username');
       setState(() {
-        _markers.add(
+        _markers.add (
           Marker(
             draggable: true,
             markerId: MarkerId('$username'),
@@ -177,14 +185,14 @@ class _MainScreenState extends State<MainScreen> {
             infoWindow: InfoWindow(
               title: '$username',
             ),
-
+            icon: BitmapDescriptor.defaultMarkerWithHue(10),
           ),
         );
       });
       for (Map member in Members) {
         _markers.removeWhere((m) => m.markerId.value == member['username']);
         _markers.add(
-            RippleMarker(
+          RippleMarker(
             markerId: MarkerId(member['username']),
             position: member['location'],
             infoWindow: InfoWindow(
@@ -203,17 +211,9 @@ class _MainScreenState extends State<MainScreen> {
     //once a user is registered or logged in then this current user will have  a variable
     //the current user will be null if nobody is signed in
     try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        loggedInUser = user;
-        var member1 = loggedInUser.email;
-        final QuerySnapshot activity = await _firestore
-            .collection('users')
-            .where('email', isEqualTo: member1)
-            .get();
-        final List<DocumentSnapshot> selected = activity.docs;
+      List<DocumentSnapshot> activity = await Details.getUserDetail();
         //TODO: What happens if invite does not exist
-        if (selected.length > 0) {
+        if (activity.length > 0) {
           var x = selected[0].data() as Map;
           //setting the username, docuID and status to the values gotten from the database
           setState(() {
@@ -231,7 +231,6 @@ class _MainScreenState extends State<MainScreen> {
               'tokenID': deviceTokenID,
             });
           }
-        }
         getGroupMembers();
       }
     } catch (e) {
@@ -348,7 +347,6 @@ class _MainScreenState extends State<MainScreen> {
                           .size
                           .width, // or use fixed size like 200
                       height: MediaQuery.of(context).size.height,
-                      //TODO: Add map zoom feature
                       child: GoogleMap(
                         minMaxZoomPreference: MinMaxZoomPreference(4, 20),
                         zoomGesturesEnabled: true,

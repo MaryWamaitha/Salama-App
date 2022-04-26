@@ -8,7 +8,7 @@ import 'package:encrypt/encrypt.dart';
 import 'package:encrypt/encrypt_io.dart';
 import 'package:pointycastle/asymmetric/api.dart';
 import 'main_screen.dart';
-import 'package:salama/Components/rsa_helper.dart';
+import 'package:salama/utilities/rsa_helper.dart';
 import 'package:salama/Components/icons.dart';
 
 final _firestore = FirebaseFirestore.instance;

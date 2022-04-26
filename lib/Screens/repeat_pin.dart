@@ -8,7 +8,7 @@ import 'settings.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:encrypt/encrypt_io.dart';
 import 'package:pointycastle/asymmetric/api.dart';
-import 'package:salama/Components/rsa_helper.dart';
+import 'package:salama/utilities/rsa_helper.dart';
 import 'package:salama/Components/icons.dart';
 
 final keyPair = RsaKeyHelper().generateKeyPair();
