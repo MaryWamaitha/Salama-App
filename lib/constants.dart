@@ -49,7 +49,7 @@ const kDataEntryFieldDecoration = InputDecoration(
     borderRadius: BorderRadius.all(Radius.circular(20.0)),
   ),
 );
-const kMainColour = Color(0xff466558);
+const kMainColour = Color(0xff2b5c4a);
 const kPageColour = Color(0xff31463d);
 const kBackgroundColour = Color(0xff24342e);
 

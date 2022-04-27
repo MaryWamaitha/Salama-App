@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           setState(() {
                             showSpinner = false;
                           });
-                          Navigator.pushNamed(context, HomePage.id);
+                          Navigator.pushNamed(context, MainScreen.id);
                         }
 
                       } on FirebaseAuthException catch (e) {

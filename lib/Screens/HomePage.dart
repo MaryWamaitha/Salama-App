@@ -2,7 +2,7 @@
 // import 'package:salama/Screens/invite_screen.dart';
 // import 'package:salama/Screens/active_group_screen.dart';
 // import 'package:salama/Screens/main_screen.dart';
-// import 'package:salama/Screens/create_group_screen.dart';
+// import 'package:salama/Screens/create_screen1.dart';
 // import 'package:salama/Screens/settings.dart';
 //
 // class MyHomePage extends StatefulWidget {

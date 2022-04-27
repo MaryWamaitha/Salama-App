@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:salama/Screens/active_group_screen.dart';
@@ -15,7 +16,7 @@ final _firestore = FirebaseFirestore.instance;
 final keyPair = RsaKeyHelper().generateKeyPair();
 
 class SafeWord extends StatefulWidget {
-  static String id = 'leave_group';
+  static String id = 'safe_word';
 
   @override
   _SafeWordState createState() => _SafeWordState();
@@ -122,147 +123,144 @@ class _SafeWordState extends State<SafeWord> {
           backgroundColor: kMainColour,
         ),
       ),
-      body: set != 0
-          ? Expanded(
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                        color: Colors.white70,
-                        borderRadius: new BorderRadius.all(
-                          const Radius.circular(30.0),
-                        )
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(30),
-                      child: Center(
-                        child: PinCodeTextField(
-                          length: 4,
-                          obscureText: false,
-                          animationType: AnimationType.fade,
-                          keyboardType: TextInputType.number,
-                          pinTheme: PinTheme(
-                            shape: PinCodeFieldShape.box,
-                            inactiveColor: Colors.green,
-                            activeFillColor: Colors.green,
-                            fieldHeight: 50,
-                            fieldWidth: 40,
-                            selectedFillColor: Colors.yellow,
-                          ),
-                          animationDuration: const Duration(milliseconds: 300),
-                          controller: textEditingController,
-                          onCompleted: (v) async {
-                            if (pin != currentText) {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text(' Pins dont match'),
-                                  content: Text(
-                                      'The pin entered does not much the password on record'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(ctx).pop();
-                                      },
-                                      child: Text('Okay'),
-                                    )
-                                  ],
-                                ),
-                              );
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text(' Safe Word' ),
-                                  content: Text(
-                                      'The safe word for the group is $safeWord'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pushNamed(context, ActiveGroup.id);
-                                      },
-                                      child: Text('Go back to group'),
-                                    )
-                                  ],
-                                ),
-                              );
-                            }
-                          },
-                          onChanged: (value) {
-                            debugPrint(value);
-                            setState(() {
-                              currentText = value;
-                            });
-                          },
-                          beforeTextPaste: (text) {
-                            return true;
-                          },
-                          appContext: context,
-                        ),
-                      ),
-                    ),
+      body:  Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+                color: Colors.white70,
+                borderRadius: new BorderRadius.all(
+                  const Radius.circular(30.0),
+                )
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(30),
+              child: Center(
+                child: PinCodeTextField(
+                  length: 4,
+                  obscureText: false,
+                  animationType: AnimationType.fade,
+                  keyboardType: TextInputType.number,
+                  pinTheme: PinTheme(
+                    shape: PinCodeFieldShape.box,
+                    inactiveColor: Colors.green,
+                    activeFillColor: Colors.green,
+                    fieldHeight: 50,
+                    fieldWidth: 40,
+                    selectedFillColor: Colors.yellow,
                   ),
-                  Menu()
-                ],
-              ),
-            )
-          : Padding(
-            padding: EdgeInsets.only(top: 120),
-            child: Container(
-                color: kBackgroundColour,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(25,15,25,0),
-                        child: Container(
-                          color: kMainColour,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 15.0),
-                                  child: Text(
-                                      'You have not set a pin but are already \n in a group. Please ask your squad to \n mark you as safe so that you can leave \n group and afterwards set a pin for future \n groups'),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, ActiveGroup.id);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: Colors.amberAccent,
-                                        borderRadius: new BorderRadius.all(
-                                          const Radius.circular(30.0),
-                                        )),
-                                    height: 50,
-                                    width: 150.00,
-                                    child: Center(
-                                      child: Text(
-                                        'Go Back',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                  animationDuration: const Duration(milliseconds: 300),
+                  controller: textEditingController,
+                  onCompleted: (v) async {
+                    if (pin != currentText) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(' Pins dont match'),
+                          content: Text(
+                              'The pin entered does not much the password on record'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                              },
+                              child: Text('Okay'),
+                            )
+                          ],
                         ),
-                      ),
-                    ),
-                    Menu()
-                  ],
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(' Safe Word' ),
+                          content: Text(
+                              'The safe word for the group is $safeWord'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, ActiveGroup.id);
+                              },
+                              child: Text('Go back to group'),
+                            )
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                  onChanged: (value) {
+                    debugPrint(value);
+                    setState(() {
+                      currentText = value;
+                    });
+                  },
+                  beforeTextPaste: (text) {
+                    return true;
+                  },
+                  appContext: context,
                 ),
               ),
+            ),
           ),
+          Menu()
+        ],
+      )
+          // : Container(
+          //     color: kBackgroundColour,
+          //     child: Column(
+          //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //       children: [
+          //         Center(
+          //           child: Padding(
+          //             padding: const EdgeInsets.fromLTRB(25,2,25,0),
+          //             child: Center(
+          //               child: Container(
+          //                 color: kMainColour,
+          //                 child: Column(
+          //                   mainAxisAlignment: MainAxisAlignment.center,
+          //                   children: [
+          //                     Center(
+          //                       child: Padding(
+          //                         padding: const EdgeInsets.only(top: 15.0),
+          //                         child: Text(
+          //                             'You have not set a pin and hence cannot see the Safe Word.\n Please go to settings to set pin'),
+          //                       ),
+          //                     ),
+          //                     TextButton(
+          //                       onPressed: () {
+          //                         Navigator.pushNamed(context, ActiveGroup.id);
+          //                       },
+          //                       child: Padding(
+          //                         padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+          //                         child: Container(
+          //                           decoration: BoxDecoration(
+          //                               color: Colors.amberAccent,
+          //                               borderRadius: new BorderRadius.all(
+          //                                 const Radius.circular(30.0),
+          //                               )),
+          //                           height: 50,
+          //                           width: 150.00,
+          //                           child: Center(
+          //                             child: Text(
+          //                               'Go Back',
+          //                               style: TextStyle(
+          //                                 color: Colors.black,
+          //                               ),
+          //                             ),
+          //                           ),
+          //                         ),
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ),
+          //         Menu()
+          //       ],
+          //     ),
+          //   ),
     );
   }
 }

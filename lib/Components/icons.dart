@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import '../constants.dart';
-import '../Screens/create_group_screen.dart';
+import '../Screens/create_screen1.dart';
 import '../Screens/trial_screen.dart';
 import '../Screens/invite_screen.dart';
 import '../Screens/moving_screen.dart';

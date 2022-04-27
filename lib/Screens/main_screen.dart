@@ -11,7 +11,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_screen.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_animarker/flutter_map_marker_animation.dart';
-// import '../Components/marker_icon_generator.dart';
+import '../Components/icons.dart';
 import '../models/getUser.dart';
 import 'package:salama/Components/marker_generator.dart';
 
@@ -28,7 +28,7 @@ class _MainScreenState extends State<MainScreen> {
   Position _location;
   int selectedPage = 0;
   String username;
-  List<Map> Members = null;
+  List<Map> Members = [];
   LatLng userLocation;
   String status;
   String docuID;
@@ -197,9 +197,9 @@ class _MainScreenState extends State<MainScreen> {
         );
       });
       for (Map member in Members) {
-        var letter = '${member['username'][0]}'.toUpperCase();
-        String image = mark.getWeatherIcon(letter);
-        BitmapDescriptor markerbitmap = await BitmapDescriptor.fromAssetImage(
+        var Fletter = '${member['username'].toString()[0]}'.toUpperCase();
+        String image = mark.getWeatherIcon(Fletter);
+        BitmapDescriptor markerIcon = await BitmapDescriptor.fromAssetImage(
           ImageConfiguration(size: Size(22, 40)),
           "$image",
         );
@@ -211,7 +211,7 @@ class _MainScreenState extends State<MainScreen> {
             infoWindow: InfoWindow(
               title: member['username'],
             ),
-            icon: markerbitmap,
+            icon: markerIcon,
           ),
         );
       }
@@ -225,7 +225,6 @@ class _MainScreenState extends State<MainScreen> {
     //the current user will be null if nobody is signed in
     try {
       List<DocumentSnapshot> activity = await Details.getUserDetail();
-        //TODO: What happens if invite does not exist
         if (activity.length > 0) {
           var x = selected[0].data() as Map;
           //setting the username, docuID and status to the values gotten from the database
@@ -317,7 +316,6 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     requestLocationPermission;
-
     getCurrentUser();
     getUserLocation();
     trackingMembers();
@@ -375,6 +373,7 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                     ),
                   ),
+                  Menu(),
                 ],
               ),
             )

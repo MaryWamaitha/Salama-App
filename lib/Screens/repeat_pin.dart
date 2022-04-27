@@ -160,7 +160,7 @@ class _RepeatPinState extends State<RepeatPin> {
                             'pin': currentText,
                             'userID': userID,
                           });
-                          Navigator.pushNamed(context, SettingsPage.id);
+                          Navigator.pushNamed(context,SettingsPage.id);
                         }
                       },
                       onChanged: (value) {

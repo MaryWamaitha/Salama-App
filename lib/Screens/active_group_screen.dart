@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:salama/Screens/create_group_screen.dart';
+import 'package:salama/Screens/create_screen1.dart';
 import 'package:salama/Screens/safe_word.dart';
 import 'main_screen.dart';
 import '../constants.dart';
@@ -373,15 +373,9 @@ class _ActiveGroupState extends State<ActiveGroup> {
     return Scaffold(
       backgroundColor: kBackgroundColour,
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(120.0),
+          preferredSize: Size.fromHeight(100.0),
           child: AppBar(
             automaticallyImplyLeading: false,
-            shape: ContinuousRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(120),
-                bottomRight: Radius.circular(120),
-              ),
-            ),
             title: Center(
               child: Padding(
                 padding: EdgeInsets.only(top: 50.0, bottom: 10),
@@ -396,75 +390,74 @@ class _ActiveGroupState extends State<ActiveGroup> {
             backgroundColor: kMainColour,
           )),
       //if the user status is active, the UI loads stream, leave group button etc
-      body: status == 'active' && groupName != null
-          ? ModalProgressHUD(
-              inAsyncCall: showSpinner,
-              child: SafeArea(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child:
-                              Text('Group: $groupName', style: kMajorHeadings),
-                        ),
-                      ),
-                      MembersStream(),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, LeaveGroup.id);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: kMainColour,
-                                borderRadius: new BorderRadius.all(
-                                  const Radius.circular(30.0),
-                                )),
-                            height: 50,
-                            width: 150.00,
-                            child: Center(
-                              child: Text(
-                                'View Group Safe Word',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
+      body: status == 'active'
+          ? SafeArea(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child:
+                          Text('Group: $groupName', style: kMajorHeadings),
+                    ),
+                  ),
+                  MembersStream(),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, SafeWord.id);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(60.0, 0, 60, 0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: kMainColour,
+                            borderRadius: new BorderRadius.all(
+                              const Radius.circular(30.0),
+                            )),
+                        height: 50,
+                        width: 200.00,
+                        child: Center(
+                          child: Text(
+                            'View Group Safe Word',
+                            style: TextStyle(
+                              color: Colors.black,
                             ),
                           ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, SafeWord.id);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.amberAccent,
-                                borderRadius: new BorderRadius.all(
-                                  const Radius.circular(30.0),
-                                )),
-                            height: 50,
-                            width: 170.00,
-                            child: Center(
-                              child: Text(
-                                'Leave Group',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, LeaveGroup.id);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.amberAccent,
+                            borderRadius: new BorderRadius.all(
+                              const Radius.circular(30.0),
+                            )),
+                        height: 50,
+                        width: 170.00,
+                        child: Center(
+                          child: Text(
+                            'Leave Group',
+                            style: TextStyle(
+                              color: kMainColour,
                             ),
                           ),
                         ),
                       ),
-                    ]),
-              ),
-            )
+                    ),
+                  ),
+                  Menu(),
+                ],
+            ),
+          )
           //if the user is not active in any group, they are informed that they are not in any group
           : Padding(
               padding: EdgeInsets.only(top: 120),
@@ -475,7 +468,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                   children: [
                     Center(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
+                        padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
                         child: Container(
                           color: kMainColour,
                           child: Column(
@@ -496,7 +489,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                                 },
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                      60.0, 10, 60, 20),
+                                      60.0, 0, 60, 0),
                                   child: Container(
                                     decoration: BoxDecoration(
                                         color: Colors.amberAccent,
@@ -521,6 +514,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                         ),
                       ),
                     ),
+                    Menu(),
                   ],
                 ),
               ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:salama/Screens/create_pin.dart';
-import 'main_screen.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import '../Components/icons.dart';
 import '../constants.dart';
 import 'emergency_contacts.dart';
 
@@ -25,12 +24,7 @@ class _SettingsPageState extends State<SettingsPage> {
             preferredSize: Size.fromHeight(100.0),
             child: AppBar(
               automaticallyImplyLeading: false,
-              shape: ContinuousRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(100),
-                  bottomRight: Radius.circular(100),
-                ),
-              ),
+
               title: Center(
                 child: Padding(
                   padding: EdgeInsets.only(top: 50.0, bottom: 10),
@@ -45,27 +39,29 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: kMainColour,
             )),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(10.0, 40, 10, 10),
-            child: Column(
-              children: [
-                // settingsItems(
-                //   mainText: 'Emergency Contacts',
-                //   explanation:
-                //       'Edit your emergency contacts, add new ones \n or delete existing ones here',
-                //   page: EmergencyContact.id,
-                // ),
-                // SizedBox(
-                //   height: 60,
-                // ),
-                settingsItems(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // settingsItems(
+              //   mainText: 'Emergency Contacts',
+              //   explanation:
+              //       'Edit your emergency contacts, add new ones \n or delete existing ones here',
+              //   page: EmergencyContact.id,
+              // ),
+              // SizedBox(
+              //   height: 60,
+              // ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 40, 10, 10),
+                child: settingsItems(
                   mainText: 'Safety Pin',
                   explanation:
                       'Set your security code which you need to leave groups and \n for viewing safe words',
                   page: CreatePin.id,
                 ),
-              ],
-            ),
+              ),
+              Menu(),
+            ],
           ),
         ));
   }

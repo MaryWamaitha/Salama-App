@@ -1,17 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:salama/Screens/active_group_screen.dart';
 import 'package:salama/Screens/emergency_contacts.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:async';
-import 'dart:math';
-import 'main_screen.dart';
-import 'package:google_api_headers/google_api_headers.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
 import '../Components/icons.dart';
 import 'invite_screen.dart';
 

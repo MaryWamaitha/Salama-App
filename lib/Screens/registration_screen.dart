@@ -284,7 +284,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               if (newUser != null) {
                                 showSpinner = false;
                                 //once the process happens successfully, the user is redirected to the main screen
-                                Navigator.pushNamed(context, HomePage.id);
+                                Navigator.pushNamed(context, MainScreen.id);
                               }
                             } on FirebaseAuthException catch (e) {
                               //if an error pops up during the process, it is displayed in a dialog box
