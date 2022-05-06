@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:salama/Screens/create_screen1.dart';
+import 'package:salama/Screens/pin_menu.dart';
 import 'package:salama/Screens/safe_word.dart';
 import 'main_screen.dart';
 import '../constants.dart';
@@ -67,7 +68,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   String sender;
   bool showSpinner = true;
   String userID;
-  String groupName;
+  String groupName ='';
   LatLng destination;
   LatLng userLocation;
   double userLatitude;
@@ -81,6 +82,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   bool isSafe;
   bool sent = false;
   String place;
+  bool indicator = true;
   calculateDistance calcDist = calculateDistance();
   getDetails Details = getDetails();
   static const fetchBackground = "fetchBackground";
@@ -205,6 +207,14 @@ class _ActiveGroupState extends State<ActiveGroup> {
       getUserLocation();
     });
   }
+  void Indicator() {
+    Timer.periodic(Duration(seconds: 4), (timer) async {
+     setState(() {
+       indicator = false;
+     });
+     timer.cancel();
+    });
+  }
 
   //method for getting user location from database and updating it locally
   void getUserLocation() async {
@@ -246,11 +256,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
           groupLongitude = details['Location'].longitude;
           destination = LatLng(
               details['Location'].latitude, details['Location'].longitude);
-          showSpinner = false;
-        });
-      } else {
-        setState(() {
-          showSpinner = false;
         });
       }
     });
@@ -294,7 +299,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //or false. true means you are now at location and tracking can begin. False means that you are not
   //yet at location and tracking cannot begin
   void activateTimer() {
-    print(' the use is beibg tracked $tracking');
     if (tracking == false) {
       Timer.periodic(Duration(minutes: 2), (timer) async {
         var value = calcDist.trackingUser(
@@ -306,15 +310,14 @@ class _ActiveGroupState extends State<ActiveGroup> {
             'tracking': true,
           });
           tracking = true;
-          //cancelling the tracking timer
+          //cancelling the activating timer
           timer.cancel();
           trackingTimer();
         }
       });
     } else {
-      //if the user tracking was already true, run the trackingTimer immediatly
+      //if the user tracking was already true from database, run the trackingTimer immediatly
       trackingTimer();
-      // print('value is updated and timer cancelled $tracking');
     }
   }
 
@@ -351,6 +354,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   @override
   void initState() {
     super.initState();
+    Indicator();
     getUserDetails();
     getGroupDetails();
     activateTimer();
@@ -392,7 +396,9 @@ class _ActiveGroupState extends State<ActiveGroup> {
       //if the user status is active, the UI loads stream, leave group button etc
       body: status == 'active'
           ? SafeArea(
-            child: Column(
+            child:
+            indicator == false ?
+            Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -456,7 +462,26 @@ class _ActiveGroupState extends State<ActiveGroup> {
                   ),
                   Menu(),
                 ],
-            ),
+            ) : Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top:
+                    60, left: 40),
+                    child: Row(
+                      children: [
+                        Text('Loading Group'),
+                        CircularProgressIndicator(
+                          color: Colors.amberAccent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Menu()
+              ],
+            )
           )
           //if the user is not active in any group, they are informed that they are not in any group
           : Padding(

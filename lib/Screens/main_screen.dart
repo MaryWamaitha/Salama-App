@@ -14,6 +14,41 @@ import 'package:flutter_animarker/flutter_map_marker_animation.dart';
 import '../Components/icons.dart';
 import '../models/getUser.dart';
 import 'package:salama/Components/marker_generator.dart';
+import 'package:firebase_core/firebase_core.dart';
+const fetchBackground = "fetchBackground";
+Position ULocation;
+String status;
+final _firestore = FirebaseFirestore.instance;
+String docuID;
+getDetails Details = getDetails();
+
+//initiating background task for getting location
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    await Firebase.initializeApp();
+    switch (task) {
+      case fetchBackground:
+        ULocation = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.bestForNavigation);
+        List<DocumentSnapshot> activity = await Details.getUserDetail();
+        if (activity.length > 0) {
+          var x = selected[0].data() as Map;
+          //setting the username, docuID and status to the values gotten from the database
+          //getting userID so that we use it to update location
+          docuID = selected[0].id;
+          status = x['status'];
+          if (status == 'active') {
+            // if a user is active, save their location to database anytime it is changed
+            await _firestore.collection("users").doc(docuID).update({
+              'location': GeoPoint(ULocation.latitude, ULocation.longitude),
+            });
+          };
+        }
+        break;
+    }
+    return Future.value(true);
+  });
+}
 
 class MainScreen extends StatefulWidget {
   static String id = 'main_screen';
@@ -23,15 +58,11 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  final _firestore = FirebaseFirestore.instance;
   User loggedInUser;
-  Position _location;
   int selectedPage = 0;
   String username;
   List<Map> Members = [];
   LatLng userLocation;
-  String status;
-  String docuID;
   String groupID;
   Set<Marker> _markers = Set<Marker>();
   final _auth = FirebaseAuth.instance;
@@ -40,31 +71,8 @@ class _MainScreenState extends State<MainScreen> {
   String email;
   String messageText;
   markerGenerator mark = markerGenerator();
-  getDetails Details = getDetails();
-  static const fetchBackground = "fetchBackground";
 
-  //initiating background task for getting location
-  void callbackDispatcher() {
-    Workmanager().executeTask((task, inputData) async {
-      switch (task) {
-        case fetchBackground:
-          final _locationData = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.bestForNavigation);
-          setState(() {
-            _location = _locationData;
-          });
-          if (status == 'active') {
-            // if a user is active, save their location to database anytime it is changed
-            await _firestore.collection("users").doc(docuID).update({
-              'location': GeoPoint(_location.latitude, _location.longitude),
-            });
-          }
-          ;
-          break;
-      }
-      return Future.value(true);
-    });
-  }
+
 
   //getting location permissions
   Future<void> requestLocationPermission() async {
@@ -122,12 +130,12 @@ class _MainScreenState extends State<MainScreen> {
     final _locationData = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
     setState(() {
-      _location = _locationData;
+      ULocation = _locationData;
     });
     if (status == 'active') {
       // if a user is acrive, save their location to database anytime it is changed
       await _firestore.collection("users").doc(docuID).update({
-        'location': GeoPoint(_location.latitude, _location.longitude),
+        'location': GeoPoint(ULocation.latitude, ULocation.longitude),
       });
     }
     ;
@@ -148,7 +156,7 @@ class _MainScreenState extends State<MainScreen> {
     _controller.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
-          target: LatLng(_location.latitude, _location.longitude),
+          target: LatLng(ULocation.latitude, ULocation.longitude),
           zoom: 15.0,
         ),
       ),
@@ -265,7 +273,6 @@ class _MainScreenState extends State<MainScreen> {
         //setting the username, docuID and status to the values gotten from the database
         setState(() {
           groupID = x['gid'];
-          print('the group ID is $groupID');
         });
 
         if (groupID != null && groupID != '') {
@@ -279,7 +286,6 @@ class _MainScreenState extends State<MainScreen> {
           int lengthy = found.length;
           while (i < lengthy) {
             var member = found[i].data() as Map;
-            print(' member is $member');
             var memberUname = member['username'];
             final QuerySnapshot membersDets = await _firestore
                 .collection('users')
@@ -296,6 +302,7 @@ class _MainScreenState extends State<MainScreen> {
             setState(() {
               Members.add(details);
             });
+
             ++i;
           }
         }
@@ -328,6 +335,9 @@ class _MainScreenState extends State<MainScreen> {
       "1",
       fetchBackground,
       frequency: Duration(minutes: 15),
+      inputData: <String, dynamic>{
+        'docuID': docuID,
+      },
     );
   }
 
@@ -348,7 +358,7 @@ class _MainScreenState extends State<MainScreen> {
         title: Text('Salama'),
         backgroundColor: kMainColour,
       ),
-      body: _location != null
+      body: ULocation != null
           ? SafeArea(
               child: Column(
                 children: [
@@ -365,7 +375,7 @@ class _MainScreenState extends State<MainScreen> {
                         myLocationEnabled: true,
                         initialCameraPosition: CameraPosition(
                           target:
-                              LatLng(_location.latitude, _location.longitude),
+                              LatLng(ULocation.latitude, ULocation.longitude),
                           // zoom: 15.0,
                         ),
                         markers: _markers,

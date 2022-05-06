@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:salama/Screens/active_group_screen.dart';
+import 'package:salama/Screens/bottommenu.dart';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:salama/models/getUser.dart';
@@ -179,7 +180,13 @@ class _SafeWordState extends State<SafeWord> {
                           actions: [
                             TextButton(
                               onPressed: () {
-                                Navigator.pushNamed(context, ActiveGroup.id);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        HomePage(currentIndex: 3,),
+                                  ),
+                                );
                               },
                               child: Text('Go back to group'),
                             )

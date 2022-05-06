@@ -57,7 +57,6 @@ class Salama extends StatelessWidget {
         RepeatPin.id: (context) => RepeatPin(),
         LeaveGroup.id: (context) => LeaveGroup(),
         SafeWord.id: (context) => SafeWord(),
-        HomePage.id: (context) => HomePage(),
         FinalCreate.id: (context) => FinalCreate(),
       },
       //TODO: If user is already logged in on device, they should be redirected to the main_screen page
