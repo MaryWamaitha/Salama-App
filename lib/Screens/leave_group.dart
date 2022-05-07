@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import '../constants.dart';
@@ -6,7 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:salama/models/getUser.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:encrypt/encrypt_io.dart';
-import 'package:pointycastle/asymmetric/api.dart';
+import 'dart:async';
+import 'bottommenu.dart';
 import 'main_screen.dart';
 import 'package:salama/utilities/rsa_helper.dart';
 import 'package:salama/Components/icons.dart';
@@ -33,6 +35,16 @@ class _LeaveGroupState extends State<LeaveGroup> {
   String decrypted;
   String activeID;
   int set = 0;
+  bool indicator = true;
+  
+  void Indicator() {
+    Timer.periodic(Duration(seconds: 3), (timer) async {
+      setState(() {
+        indicator = false;
+      });
+      timer.cancel();
+    });
+  }
 
   void getUserDetails() async {
     try {
@@ -75,11 +87,13 @@ class _LeaveGroupState extends State<LeaveGroup> {
   void initState() {
     super.initState();
     getUserDetails();
+    Indicator();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kPageColour,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(100.0),
         child: AppBar(
@@ -117,7 +131,7 @@ class _LeaveGroupState extends State<LeaveGroup> {
                           animationType: AnimationType.fade,
                           pinTheme: PinTheme(
                             shape: PinCodeFieldShape.box,
-                            inactiveColor: Colors.green,
+                            inactiveColor: Colors.amberAccent,
                             activeFillColor: Colors.green,
                             fieldHeight: 50,
                             fieldWidth: 40,
@@ -154,7 +168,10 @@ class _LeaveGroupState extends State<LeaveGroup> {
                                   .update({
                                 'status': 'inactive',
                               });
-                              Navigator.pushNamed(context, MainScreen.id);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => HomePage(currentIndex: 0)),
+                              );
                             }
                           },
                           onChanged: (value) {
@@ -177,62 +194,64 @@ class _LeaveGroupState extends State<LeaveGroup> {
               Menu()
             ],
           )
-          : Padding(
-            padding: EdgeInsets.only(top: 120),
-            child: Container(
-                color: kBackgroundColour,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(25,15,25,0),
-                        child: Container(
-                          color: kMainColour,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 15.0),
-                                  child: Text(
-                                      'You have not set a pin but are already \n in a group. Please ask your squad to \n mark you as safe so that you can leave \n group and afterwards set a pin for future \n groups'),
+          : ModalProgressHUD(
+        inAsyncCall: indicator,
+            child: SafeArea(
+              child: Container(
+                  color: kBackgroundColour,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(25,15,25,0),
+                          child: Container(
+                            color: kMainColour,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 15.0),
+                                    child: Text(
+                                        'You have not set a pin but are already \n in a group. Please ask your squad to \n mark you as safe so that you can leave \n group and afterwards set a pin for future \n groups'),
+                                  ),
                                 ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, ActiveGroup.id);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: Colors.amberAccent,
-                                        borderRadius: new BorderRadius.all(
-                                          const Radius.circular(30.0),
-                                        )),
-                                    height: 50,
-                                    width: 150.00,
-                                    child: Center(
-                                      child: Text(
-                                        'Go Back',
-                                        style: TextStyle(
-                                          color: Colors.black,
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, ActiveGroup.id);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.amberAccent,
+                                          borderRadius: new BorderRadius.all(
+                                            const Radius.circular(30.0),
+                                          )),
+                                      height: 50,
+                                      width: 150.00,
+                                      child: Center(
+                                        child: Text(
+                                          'Go Back',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Menu()
-                  ],
+                      Menu()
+                    ],
+                  ),
                 ),
-              ),
+            ),
           ),
     );
   }

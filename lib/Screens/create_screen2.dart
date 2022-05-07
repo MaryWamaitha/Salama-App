@@ -15,6 +15,7 @@ import 'settings.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../models/add_member.dart';
 import 'package:salama/models/getUser.dart';
+import 'bottommenu.dart';
 
 const kGoogleApiKey = "AIzaSyDxzZPrCfZRX5FeTsWME8iJYl4EJiKSFQo";
 
@@ -213,264 +214,335 @@ class _FinalCreateState extends State<FinalCreate> {
         ),
       ),
       body: status == 'inactive' || status == null
-          ? SingleChildScrollView(
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 10.0),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 20.0),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Where are you guys going to ?',
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Flexible(
-                                  child: IconButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: Text('Tracking Distance'),
-                                          content: Text(
-                                            'Tracking will begin once you are close to or arrive here',
-                                            textAlign: TextAlign.left,
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(ctx).pop();
-                                              },
-                                              child: Text('Okay'),
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(Icons.info_outline_rounded),
-                                  ),
-                                ),
-                              ],
+          ? SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Where are you guys going to ?',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(right: 10, bottom: 10),
-                            child: Container(
-                              height: 60.0,
-                              child: TextButton(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: new BorderRadius.all(
-                                      const Radius.circular(10.0),
+                            Flexible(
+                              child: IconButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: Text('Tracking Distance'),
+                                      content: Text(
+                                        'Tracking will begin once you are close to or arrive here',
+                                        textAlign: TextAlign.left,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(ctx).pop();
+                                          },
+                                          child: Text('Okay'),
+                                        )
+                                      ],
                                     ),
-                                    border: Border.all(
-                                      color: Colors.amberAccent,
-                                    ),
-                                  ),
-                                  height: 100.0,
-                                  width: 300.0,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      place != null
-                                          ? Text(
-                                              '$place',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                              ),
-                                            )
-                                          : Text(
-                                              ' e.g Bondai Restaurant ',
-                                              style: TextStyle(
-                                                color: Colors.black54,
-                                              ),
-                                            )
-                                    ],
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  _handlePressButton();
+                                  );
                                 },
+                                icon: Icon(Icons.info_outline_rounded),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10.0),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Add Group Safe Words',
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Flexible(
-                                  child: IconButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: Text('Tracking Distance'),
-                                          content: Text(
-                                            'This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around as friends are checking in. The group members need to enter their pin to see it',
-                                            textAlign: TextAlign.justify,
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(ctx).pop();
-                                              },
-                                              child: Text('Okay'),
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(Icons.info_outline_rounded),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(right: 25.0, left: 10),
-                              child: SizedBox(
-                                width: 300,
-                                height: 100,
-                                child: TextField(
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.black),
-                                  onChanged: (value) {
-                                    safeWord = value;
-                                  },
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter safe word',
-                                    fillColor: Colors.white,
-                                    filled: true,
-                                    contentPadding: EdgeInsets.symmetric(
-                                        vertical: 8.0, horizontal: 10.0),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(32.0)),
-                                      borderSide: BorderSide(
-                                          color: Colors.amberAccent,
-                                          width: 2.0),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(10.0)),
-                                      borderSide:
-                                          BorderSide(color: Colors.amberAccent),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.amberAccent,
-                                      ),
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(10.0)),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Tracking Distance',
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Flexible(
-                                  child: IconButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: Text('Tracking Distance'),
-                                          content: Text(
-                                            'This is how far group members can move without triggering an alert. Once users go beyond this distance from the location, an alert is sent to all group members.\nYou can either select a distance from the drop down or '
-                                            'else the system distance of 1000 m will be used.\n The distance is in metres',
-                                            textAlign: TextAlign.left,
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(ctx).pop();
-                                              },
-                                              child: Text('Okay'),
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(Icons.info_outline_rounded),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 50.0),
-                                  child: Container(
-                                    child: Center(child: androidDropdown()),
-                                    height: 35.0,
-                                    width: 80.0,
-                                    // padding: EdgeInsets.only(bottom: 30.0),
-
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.grey,
-                                      ),
-                                      borderRadius: new BorderRadius.all(
-                                        const Radius.circular(5.0),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 40.0, bottom: 8.0),
-                      child: Center(
-                        child: TextButton(
-                          onPressed: () async {
-                            //when button is clicked check if the user has group members
-                            if (place == null || place == '') {
+                      Padding(
+                        padding: EdgeInsets.only(right: 10, bottom: 10),
+                        child: Container(
+                          height: 60.0,
+                          child: TextButton(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: new BorderRadius.all(
+                                  const Radius.circular(10.0),
+                                ),
+                                border: Border.all(
+                                  color: Colors.amberAccent,
+                                ),
+                              ),
+                              height: 100.0,
+                              width: 300.0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  place != null
+                                      ? Text(
+                                          '$place',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                          ),
+                                        )
+                                      : Text(
+                                          ' e.g Bondai Restaurant ',
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        )
+                                ],
+                              ),
+                            ),
+                            onPressed: () async {
+                              _handlePressButton();
+                            },
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Add Group Safe Words',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Flexible(
+                              child: IconButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: Text('Tracking Distance'),
+                                      content: Text(
+                                        'This is a word only known to group members and that you can use to indicate you are unsafe when attacker is around as friends are checking in. The group members need to enter their pin to see it',
+                                        textAlign: TextAlign.justify,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(ctx).pop();
+                                          },
+                                          child: Text('Okay'),
+                                        )
+                                      ],
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.info_outline_rounded),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.only(right: 25.0, left: 10),
+                          child: SizedBox(
+                            width: 300,
+                            height: 100,
+                            child: TextField(
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.black),
+                              onChanged: (value) {
+                                safeWord = value;
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Enter safe word',
+                                fillColor: Colors.white,
+                                filled: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 10.0),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(32.0)),
+                                  borderSide: BorderSide(
+                                      color: Colors.amberAccent,
+                                      width: 2.0),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(10.0)),
+                                  borderSide:
+                                      BorderSide(color: Colors.amberAccent),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.amberAccent,
+                                  ),
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(10.0)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tracking Distance',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Flexible(
+                              child: IconButton(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: Text('Tracking Distance'),
+                                      content: Text(
+                                        'This is how far group members can move without triggering an alert. Once users go beyond this distance from the location, an alert is sent to all group members.\nYou can either select a distance from the drop down or '
+                                        'else the system distance of 1000 m will be used.\n The distance is in metres',
+                                        textAlign: TextAlign.left,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(ctx).pop();
+                                          },
+                                          child: Text('Okay'),
+                                        )
+                                      ],
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.info_outline_rounded),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 50.0),
+                              child: Container(
+                                child: Center(child: androidDropdown()),
+                                height: 35.0,
+                                width: 80.0,
+                                // padding: EdgeInsets.only(bottom: 30.0),
+
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey,
+                                  ),
+                                  borderRadius: new BorderRadius.all(
+                                    const Radius.circular(5.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only( bottom: 8.0),
+                  child: Center(
+                    child: TextButton(
+                      onPressed: () async {
+                        //when button is clicked check if the user has group members
+                        if (place == null || place == '') {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(' Destination'),
+                              content: Text(
+                                  'Hello, you need to select the destination to create the group'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(ctx).pop();
+                                  },
+                                  child: Text('Okay'),
+                                )
+                              ],
+                            ),
+                          );
+                        } else {
+                          try {
+                            //saving group details to grpoup table and getting doc Id to use it to create the safeTaps subcollection
+                            var docRef =
+                                await _firestore.collection('groups').add({
+                              'Name': groupName,
+                              'Distance': distance,
+                              'SafeWord': safeWord,
+                              'Location': GeoPoint(latitude, longi),
+                              'Destination': place,
+                            });
+                            var documentId = docRef.id;
+                            //creating a new collection inside the doc called safeTaps and adding creator safe tap to it
+                            await _firestore
+                                .collection("groups")
+                                .doc(documentId)
+                                .collection("safeTaps")
+                                .add({
+                              'username': creator,
+                              'safeTaps': 0,
+                            });
+                            //adding creator to active_members collection
+                            await _firestore
+                                .collection('active_members')
+                                .add({
+                              'username': creator,
+                              'isSafe': true,
+                              'gid': documentId,
+                              'tracking': false,
+                            });
+                            // updating creator status to true
+                            await _firestore
+                                .collection("users")
+                                .doc(userID)
+                                .update({
+                              'status': 'active',
+                            });
+                            //looping through selected members list and sending invites and notifications
+                            for (var invite in Members) {
+                              _firestore.collection('invites').add({
+                                'username': invite['username'],
+                                'gid': documentId,
+                                'inviteSent': inviteSent,
+                                'sender': creator,
+                                'destination': place,
+                              });
+                              List<String> tokenList = [];
+                              tokenList.add(invite['tokenID'].toString());
+                              print('the token ID is $tokenList');
+                              _handleSendNotification(
+                                  tokenList,
+                                  '$creator has invited you to join $groupName',
+                                  '$creator has invited you to join group to $place.\nTo accept invite, please go to invites page ');
+                            }
+                            if (setPin == 0) {
                               showDialog(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: Text(' Destination'),
+                                  title: Text('Set pin'),
                                   content: Text(
-                                      'Hello, you need to select the destination to create the group'),
+                                      'Hey there, you do not have a pin. Please set your pin in settings You will need the pin to leave your groups yourself'),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(ctx).pop();
+                                        Navigator.pushNamed(
+                                            context, CreatePin.id);
                                       },
                                       child: Text('Okay'),
                                     )
@@ -478,125 +550,56 @@ class _FinalCreateState extends State<FinalCreate> {
                                 ),
                               );
                             } else {
-                              try {
-                                //saving group details to grpoup table and getting doc Id to use it to create the safeTaps subcollection
-                                var docRef =
-                                    await _firestore.collection('groups').add({
-                                  'Name': groupName,
-                                  'Distance': distance,
-                                  'SafeWord': safeWord,
-                                  'Location': GeoPoint(latitude, longi),
-                                  'Destination': place,
-                                });
-                                var documentId = docRef.id;
-                                //creating a new collection inside the doc called safeTaps and adding creator safe tap to it
-                                await _firestore
-                                    .collection("groups")
-                                    .doc(documentId)
-                                    .collection("safeTaps")
-                                    .add({
-                                  'username': creator,
-                                  'safeTaps': 0,
-                                });
-                                //adding creator to active_members collection
-                                await _firestore
-                                    .collection('active_members')
-                                    .add({
-                                  'username': creator,
-                                  'isSafe': true,
-                                  'gid': documentId,
-                                  'tracking': false,
-                                });
-                               // updating creator status to true
-                                await _firestore
-                                    .collection("users")
-                                    .doc(userID)
-                                    .update({
-                                  'status': 'active',
-                                });
-                                //looping through selected members list and sending invites and notifications
-                                for (var invite in Members) {
-                                  _firestore.collection('invites').add({
-                                    'username': invite['username'],
-                                    'gid': documentId,
-                                    'inviteSent': inviteSent,
-                                    'sender': creator,
-                                    'destination': place,
-                                  });
-                                  List<String> tokenList = [];
-                                  tokenList.add(invite['tokenID'].toString());
-                                  print('the token ID is $tokenList');
-                                  _handleSendNotification(
-                                      tokenList,
-                                      '$creator has invited you to join $groupName',
-                                      '$creator has invited you to join group to $place.\nTo accept invite, please go to invites page ');
-                                }
-                                if (setPin == 0) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text('Set pin'),
-                                      content: Text(
-                                          'Hey there, you do not have a pin. Please set your pin in settings You will need the pin to leave your groups yourself'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pushNamed(
-                                                context, CreatePin.id);
-                                          },
-                                          child: Text('Okay'),
-                                        )
-                                      ],
-                                    ),
-                                  );
-                                } else {
-                                  Navigator.pushNamed(context, ActiveGroup.id);
-                                }
-                              } catch (e) {
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: Text(' Ops! Group creation Failed'),
-                                    content: Text(
-                                        'The group creation wasnt successful'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(ctx).pop();
-                                        },
-                                        child: Text('Okay'),
-                                      )
-                                    ],
-                                  ),
-                                );
-                              }
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          HomePage(currentIndex: 3)));
                             }
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.amberAccent,
-                                borderRadius: new BorderRadius.all(
-                                  const Radius.circular(30.0),
-                                )),
-                            height: 50,
-                            width: 250.00,
-                            child: Center(
-                              child: Text(
-                                'Create Group',
-                                style: TextStyle(
-                                  color: kMainColour,
-                                ),
+                          } catch (e) {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text(' Ops! Group creation Failed'),
+                                content: Text(
+                                    'The group creation wasnt successful'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(ctx).pop();
+                                    },
+                                    child: Text('Okay'),
+                                  )
+                                ],
                               ),
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: Colors.amberAccent,
+                            borderRadius: new BorderRadius.all(
+                              const Radius.circular(30.0),
+                            )),
+                        height: 50,
+                        width: 250.00,
+                        child: Center(
+                          child: Text(
+                            'Create Group',
+                            style: TextStyle(
+                              color: kMainColour,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    Menu(),
-                  ],
+                  ),
                 ),
-              ),
-            )
+                Menu(),
+              ],
+            ),
+          )
           : Padding(
               padding: EdgeInsets.only(top: 120),
               child: Container(

@@ -474,7 +474,7 @@ class _CreateGroupState extends State<CreateGroup> {
           : ModalProgressHUD(
               inAsyncCall: indicator,
               child: Padding(
-                padding: EdgeInsets.only(top: 120),
+                padding: EdgeInsets.only(top: 40),
                 child: Container(
                   color: kBackgroundColour,
                   child: Column(
@@ -488,6 +488,7 @@ class _CreateGroupState extends State<CreateGroup> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                Image.asset('images/groupExists.png'),
                                 Center(
                                   child: Padding(
                                     padding: const EdgeInsets.all(15.0),
@@ -516,7 +517,7 @@ class _CreateGroupState extends State<CreateGroup> {
                                       child: Text(
                                         'Go to Group',
                                         style: TextStyle(
-                                          color: Colors.black,
+                                          color: kMainColour,
                                         ),
                                       ),
                                     ),

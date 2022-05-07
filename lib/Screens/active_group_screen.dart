@@ -448,7 +448,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                       child: Text(
                         'View Group Safe Word',
                         style: TextStyle(
-                          color: Colors.black,
+                          color: Colors.white70,
                         ),
                       ),
                     ),
@@ -685,7 +685,7 @@ class MemberStatus extends StatelessWidget {
             onPressed: () async {
               //accessing the safeTaps collection which is nested in groups
               final QuerySnapshot safeDetails = await _firestore
-                  .collection('active_members')
+                  .collection('groups')
                   .doc(groupID)
                   .collection('safeTaps')
                   .where('username', isEqualTo: member)
@@ -694,6 +694,7 @@ class MemberStatus extends StatelessWidget {
               var result = selected[0].data() as Map;
               var safeID = selected[0].id;
               safeTaps = result['safeTaps'];
+              print( 'the safe taps are $safeTaps');
               //checks if the button has already been clicked for this user to avoid one person clicking for both safeTaps
               if (tapped == false) {
                 //if the button has not been clicked, increses the safeTaps by 1 and sets the tapped to true such that the user cannot click this again
@@ -736,7 +737,7 @@ class MemberStatus extends StatelessWidget {
                     builder: (ctx) => AlertDialog(
                       title: Text(' Safety Alert'),
                       content: Text(
-                          'Please note that another member is required to click \n this for the user to be marked as safe'),
+                          'Please note that another member is required to click this for the user to be marked as safe'),
                       actions: [
                         TextButton(
                           onPressed: () {

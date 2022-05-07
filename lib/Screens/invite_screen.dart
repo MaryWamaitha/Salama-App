@@ -330,7 +330,7 @@ class _InviteState extends State<Invite> {
                                             });
                                             await _firestore
                                                 .collection('users')
-                                                .doc(id)
+                                                .doc(userID)
                                                 .update({
                                               'status': 'active',
                                             });
@@ -436,7 +436,7 @@ class _InviteState extends State<Invite> {
           : ModalProgressHUD(
               inAsyncCall: indicator,
               child: Padding(
-                padding: EdgeInsets.only(top: 120),
+                padding: EdgeInsets.only(top: 40),
                 child: Container(
                   color: kBackgroundColour,
                   child: Column(
@@ -450,6 +450,7 @@ class _InviteState extends State<Invite> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                Image.asset('images/no_invite.png'),
                                 Center(
                                   child: Padding(
                                     padding: const EdgeInsets.all(15.0),
@@ -481,7 +482,7 @@ class _InviteState extends State<Invite> {
                                       child: Text(
                                         'Create Group',
                                         style: TextStyle(
-                                          color: Colors.black,
+                                          color: kMainColour,
                                         ),
                                       ),
                                     ),
