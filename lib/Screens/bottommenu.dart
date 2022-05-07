@@ -39,6 +39,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         body: _pageOptions[selectedPage],
         bottomNavigationBar: BottomNavigationBar(
+          showUnselectedLabels: true,
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.home, size: 30), label: 'Home', backgroundColor: kMainColour),
             BottomNavigationBarItem(icon: Icon(Icons.person_add, size: 30), label: 'Invites', backgroundColor: kMainColour),

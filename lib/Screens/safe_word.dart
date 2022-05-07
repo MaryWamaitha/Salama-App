@@ -60,31 +60,33 @@ class _SafeWordState extends State<SafeWord> {
         if ( set > 0){
           var entry = found[0].data() as Map;
           pin = entry['pin'];
+          print('pin was found');
         }
-
       }
-
       //using the username, we access the active_members table where we get the GID
       final QuerySnapshot user = await _firestore
           .collection('active_members')
           .where('username', isEqualTo: username)
           .get();
       final List<DocumentSnapshot> returned = user.docs;
-      var data =returned[0].data() as Map;
+      final info =returned[0].data() as Map;
+      print('the group dtails are $info');
       setState(() {
         activeID = returned[0].id;
-        groupID = data[0]['gid'];
+        groupID = info['gid'];
       });
-      //the gid is used to get a record in the group table that matches the gid gotten and this is used  to get the safe word
-      final QuerySnapshot group = await _firestore
+      _firestore
           .collection('groups')
-          .where('gid', isEqualTo: groupID)
-          .get();
-      final List<DocumentSnapshot> groupDoc = group.docs;
-      var groupMap =groupDoc[0].data() as Map;
-      setState(() {
-        activeID = returned[0].id;
-        safeWord = groupMap[0]['safeWord'];
+          .doc(groupID)
+          .get()
+          .then((DocumentSnapshot documentSnapshot) {
+        if (documentSnapshot.exists) {
+          final details = documentSnapshot.data() as Map;
+          setState(() {
+            // getting the safe word from DB
+            safeWord= details['SafeWord'];
+          });
+        }
       });
     } catch (e) {
       print(e);

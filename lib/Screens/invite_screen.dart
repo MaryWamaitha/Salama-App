@@ -4,6 +4,7 @@ import 'package:salama/Screens/create_screen1.dart';
 import 'package:salama/Screens/create_pin.dart';
 import 'package:salama/Screens/settings.dart';
 import 'main_screen.dart';
+import 'bottommenu.dart';
 import 'package:geocoding/geocoding.dart';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -220,17 +221,16 @@ class _InviteState extends State<Invite> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(children: [
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       CircleAvatar(
-                                        backgroundImage: AssetImage(
-                                            'images/group.png'),
+                                        backgroundImage:
+                                            AssetImage('images/group.png'),
                                         radius: 40,
                                       ),
                                       Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 8.0),
+                                        padding:
+                                            const EdgeInsets.only(left: 8.0),
                                         child: Row(
                                           children: [
                                             Text(
@@ -245,8 +245,7 @@ class _InviteState extends State<Invite> {
                                               style: TextStyle(
                                                   fontSize: 20.0,
                                                   color: Colors.black,
-                                                  fontWeight:
-                                                      FontWeight.bold),
+                                                  fontWeight: FontWeight.bold),
                                             ),
                                           ],
                                         ),
@@ -277,8 +276,7 @@ class _InviteState extends State<Invite> {
                                     endIndent: 5, // thickness of the line
                                     color: Colors
                                         .grey, // The color to use when painting the line.
-                                    height:
-                                        15, // The divider's height extent.
+                                    height: 15, // The divider's height extent.
                                   ),
                                   Row(
                                     children: [
@@ -305,17 +303,14 @@ class _InviteState extends State<Invite> {
                                           if (status == 'active') {
                                             showDialog(
                                               context: context,
-                                              builder: (ctx) =>
-                                                  AlertDialog(
-                                                title: Text(
-                                                    'Already Active'),
+                                              builder: (ctx) => AlertDialog(
+                                                title: Text('Already Active'),
                                                 content: Text(
                                                     'Hello, you are already in a group and therefore cannot join this one. Kindly leave current group to join this one'),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () {
-                                                      Navigator.of(ctx)
-                                                          .pop();
+                                                      Navigator.of(ctx).pop();
                                                     },
                                                     child: Text('Okay'),
                                                   )
@@ -326,8 +321,7 @@ class _InviteState extends State<Invite> {
                                             var id = user['docID'];
                                             var gid = user['gid'];
                                             await _firestore
-                                                .collection(
-                                                    'active_members')
+                                                .collection('active_members')
                                                 .add({
                                               'username': username,
                                               'isSafe': true,
@@ -358,19 +352,16 @@ class _InviteState extends State<Invite> {
                                             if (setPin == 0) {
                                               showDialog(
                                                 context: context,
-                                                builder: (ctx) =>
-                                                    AlertDialog(
+                                                builder: (ctx) => AlertDialog(
                                                   title: Text('Set pin'),
                                                   content: Text(
                                                       'Hey there, please set your pin in settings \n You will need the pin to leave your groups yourself'),
                                                   actions: [
                                                     TextButton(
                                                       onPressed: () {
-                                                        Navigator
-                                                            .pushNamed(
-                                                                context,
-                                                                CreatePin
-                                                                    .id);
+                                                        Navigator.pushNamed(
+                                                            context,
+                                                            CreatePin.id);
                                                       },
                                                       child: Text('Okay'),
                                                     )
@@ -378,8 +369,10 @@ class _InviteState extends State<Invite> {
                                                 ),
                                               );
                                             } else {
-                                              Navigator.pushNamed(context,
-                                                  ActiveGroup.id);
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(builder: (context) => HomePage(currentIndex: 3)),
+                                              );
                                             }
                                           }
                                         },
@@ -435,10 +428,7 @@ class _InviteState extends State<Invite> {
                             ),
                           ),
                         ),
-                      Menu(),
-
                     ],
-
                   ),
                 ),
               ),
@@ -472,8 +462,12 @@ class _InviteState extends State<Invite> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(
-                                        context, CreateGroup.id);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              HomePage(currentIndex: 2)),
+                                    );
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
@@ -498,7 +492,7 @@ class _InviteState extends State<Invite> {
                           ),
                         ),
                       ),
-                      Menu(),
+                      // Menu(),
                     ],
                   ),
                 ),

@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import 'package:salama/Screens/create_pin.dart';
+import 'bottommenu.dart';
 import 'package:salama/Screens/create_screen2.dart';
 import 'package:salama/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -498,8 +499,10 @@ class _CreateGroupState extends State<CreateGroup> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(
-                                        context, ActiveGroup.id);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => HomePage(currentIndex: 3)),
+                                    );
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
@@ -524,7 +527,6 @@ class _CreateGroupState extends State<CreateGroup> {
                           ),
                         ),
                       ),
-                      Menu(),
                     ],
                   ),
                 ),

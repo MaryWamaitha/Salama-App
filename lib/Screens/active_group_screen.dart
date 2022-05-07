@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:salama/Screens/bottommenu.dart';
 import 'package:salama/Screens/create_screen1.dart';
 import 'package:salama/Screens/pin_menu.dart';
 import 'package:salama/Screens/safe_word.dart';
@@ -208,7 +209,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   }
 
   void Indicator() {
-    Timer.periodic(Duration(seconds: 5), (timer) async {
+    Timer.periodic(Duration(seconds: 3), (timer) async {
       setState(() {
         indicator = false;
       });
@@ -294,7 +295,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //or false. true means you are now at location and tracking can begin. False means that you are not
   //yet at location and tracking cannot begin
   void activateTimer() {
-      Timer.periodic(Duration(seconds: 10), (timer) async {
+      Timer.periodic(Duration(minutes: 2), (timer) async {
         calculateDistance calcDist = calculateDistance();
         var userCoord = await getUserLocation();
         userLatitude = userCoord.latitude;
@@ -329,7 +330,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
 
   //function that runs every 60 seconds and checks if you are still at location
   void trackingTimer() {
-    Timer.periodic(Duration(seconds: 5), (timer) async {
+    Timer.periodic(Duration(seconds: 60), (timer) async {
       calculateDistance calcDist = calculateDistance();
       LatLng userCoord = await getUserLocation();
       userLatitude = userCoord.latitude;
@@ -479,7 +480,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
                   ),
                 ),
               ),
-              Menu(),
             ],
           ) : Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -498,7 +498,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
                   ),
                 ),
               ),
-              Menu()
             ],
           )
       )
@@ -529,7 +528,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, CreateGroup.id);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => HomePage(currentIndex: 2)),
+                            );
                           },
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(
@@ -558,7 +560,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
                   ),
                 ),
               ),
-              Menu(),
             ],
           ),
         ),
