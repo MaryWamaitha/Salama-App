@@ -479,6 +479,7 @@ class _FinalCreateState extends State<FinalCreate> {
                               );
                             } else {
                               try {
+                                //saving group details to grpoup table and getting doc Id to use it to create the safeTaps subcollection
                                 var docRef =
                                     await _firestore.collection('groups').add({
                                   'Name': groupName,
@@ -488,6 +489,7 @@ class _FinalCreateState extends State<FinalCreate> {
                                   'Destination': place,
                                 });
                                 var documentId = docRef.id;
+                                //creating a new collection inside the doc called safeTaps and adding creator safe tap to it
                                 await _firestore
                                     .collection("groups")
                                     .doc(documentId)
@@ -496,7 +498,7 @@ class _FinalCreateState extends State<FinalCreate> {
                                   'username': creator,
                                   'safeTaps': 0,
                                 });
-                                print('document ID is $documentId');
+                                //adding creator to active_members collection
                                 await _firestore
                                     .collection('active_members')
                                     .add({
@@ -505,12 +507,14 @@ class _FinalCreateState extends State<FinalCreate> {
                                   'gid': documentId,
                                   'tracking': false,
                                 });
+                               // updating creator status to true
                                 await _firestore
                                     .collection("users")
                                     .doc(userID)
                                     .update({
                                   'status': 'active',
                                 });
+                                //looping through selected members list and sending invites and notifications
                                 for (var invite in Members) {
                                   _firestore.collection('invites').add({
                                     'username': invite['username'],

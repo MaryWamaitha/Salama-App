@@ -12,6 +12,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:salama/constants.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:salama/Components/icons.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'dart:async';
 
 final _firestore = FirebaseFirestore.instance;
 
@@ -30,6 +32,7 @@ class _InviteState extends State<Invite> {
   String groupName;
   LatLng destination;
   String groupID;
+  String status;
   double latitude;
   double longitude;
   String address;
@@ -40,6 +43,7 @@ class _InviteState extends State<Invite> {
   String senderName;
   String userID;
   int setPin;
+  bool indicator = true;
 
   //getting token ID to be used for notifications
 
@@ -64,12 +68,22 @@ class _InviteState extends State<Invite> {
         if (selected.length > 0) {
           var x = selected[0].data() as Map;
           username = x['username'];
+          status = x['status'];
           getDetails();
         }
       }
     } catch (e) {
       print(e);
     }
+  }
+
+  void Indicator() {
+    Timer.periodic(Duration(seconds: 3), (timer) async {
+      setState(() {
+        indicator = false;
+      });
+      timer.cancel();
+    });
   }
 
   //use username to get invite details like GID, sender etc
@@ -162,6 +176,7 @@ class _InviteState extends State<Invite> {
   void initState() {
     super.initState();
     getInvites();
+    Indicator();
   }
 
   @override
@@ -187,273 +202,305 @@ class _InviteState extends State<Invite> {
         ),
       ),
       body: Invites.isNotEmpty
-          ? SingleChildScrollView(
-              child: SafeArea(
-                child: Expanded(
+          ? ModalProgressHUD(
+              inAsyncCall: indicator,
+              child: SingleChildScrollView(
+                child: SafeArea(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          for (Map user in Invites)
-                            Center(
+                      for (Map user in Invites)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                left: 30.0, right: 30.0, top: 10),
+                            child: Card(
+                              color: Colors.white,
                               child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 30.0, right: 30.0, top: 10),
-                                child: Card(
-                                  color: Colors.white,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        children: [
-                                          CircleAvatar(
-                                            backgroundImage:
-                                                AssetImage('images/group.png'),
-                                            radius: 40,
-                                          ),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 8.0),
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  'Sender:',
-                                                  style: TextStyle(
-                                                    fontSize: 16.0,
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  user['sender'].toString(),
-                                                  style: TextStyle(
-                                                      fontSize: 20.0,
-                                                      color: Colors.black,
-                                                      fontWeight: FontWeight.bold),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                        ],
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.start,
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundImage: AssetImage(
+                                            'images/group.png'),
+                                        radius: 40,
                                       ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            'Group Name: ',
-                                            style: TextStyle(
-                                              fontSize: 16.0,
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          Text(
-                                            user['groupName'].toString(),
-                                            style: TextStyle(
-                                                fontSize: 20.0,
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 8.0),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              'Sender:',
+                                              style: TextStyle(
+                                                fontSize: 16.0,
                                                 color: Colors.black,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                      Divider(
-                                        thickness: 1,
-                                        indent: 5,
-                                        endIndent: 5, // thickness of the line
-                                        color: Colors
-                                            .grey, // The color to use when painting the line.
-                                        height: 15, // The divider's height extent.
-                                      ),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.location_city_outlined,
-                                            color: Colors.green,
-                                            size: 40,
-                                          ),
-                                          Text(
-                                            user['place'].toString(),
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceAround,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () async {
-                                              var id = user['docID'];
-                                              var gid = user['gid'];
-                                              await _firestore
-                                                  .collection('active_members')
-                                                  .add({
-                                                'username': username,
-                                                'isSafe': true,
-                                                'gid': gid,
-                                                'tracking': false,
-                                              });
-                                              await _firestore
-                                                  .collection('users').doc(id)
-                                                  .update({
-                                                'status': 'active',
-                                              });
-                                              await _firestore
-                                                  .collection("invites")
-                                                  .doc(id)
-                                                  .delete();
-                                              setState(() {
-                                                Invites.remove(user);
-                                              });
-                                              await _firestore
-                                                  .collection("groups")
-                                                  .doc(gid)
-                                                  .collection("safeTaps")
-                                                  .add({
-                                                'username': username,
-                                                'safeTaps': 0,
-                                              });
-                                              if (setPin == 0) {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (ctx) => AlertDialog(
-                                                    title: Text('Set pin'),
-                                                    content: Text(
-                                                        'Hey there, please set your pin in settings \n You will need the pin to leave your groups yourself'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.pushNamed(
-                                                              context,
-                                                              CreatePin.id);
-                                                        },
-                                                        child: Text('Okay'),
-                                                      )
-                                                    ],
-                                                  ),
-                                                );
-                                              } else {
-                                                Navigator.pushNamed(
-                                                    context, ActiveGroup.id);
-                                              }
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  color: Colors.green,
-                                                  borderRadius:
-                                                      new BorderRadius.all(
-                                                    Radius.circular(10.0),
-                                                  )),
-                                              child: Center(
-                                                child: Text('Accept',
-                                                    style: TextStyle(
-                                                      color: Colors.black54,
-                                                    )),
                                               ),
-                                              width: 80,
-                                              height: 30,
                                             ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              var ID = user['docID'];
-                                              setState(() {
-                                                _firestore
-                                                    .collection("invites")
-                                                    .doc(ID)
-                                                    .delete();
-                                                Invites.remove(user);
-                                              });
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  color: Colors.grey,
-                                                  borderRadius:
-                                                      new BorderRadius.all(
-                                                    Radius.circular(10.0),
-                                                  )),
-                                              child: Center(
-                                                child: Text('Decline',
-                                                    style: TextStyle(
-                                                      color: Colors.black54,
-                                                    )),
-                                              ),
-                                              width: 80,
-                                              height: 30,
+                                            Text(
+                                              user['sender'].toString(),
+                                              style: TextStyle(
+                                                  fontSize: 20.0,
+                                                  color: Colors.black,
+                                                  fontWeight:
+                                                      FontWeight.bold),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       )
-                                    ]),
+                                    ],
                                   ),
-                                ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Group Name: ',
+                                        style: TextStyle(
+                                          fontSize: 16.0,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      Text(
+                                        user['groupName'].toString(),
+                                        style: TextStyle(
+                                            fontSize: 20.0,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                  Divider(
+                                    thickness: 1,
+                                    indent: 5,
+                                    endIndent: 5, // thickness of the line
+                                    color: Colors
+                                        .grey, // The color to use when painting the line.
+                                    height:
+                                        15, // The divider's height extent.
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_city_outlined,
+                                        color: Colors.green,
+                                        size: 40,
+                                      ),
+                                      Text(
+                                        user['place'].toString(),
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () async {
+                                          if (status == 'active') {
+                                            showDialog(
+                                              context: context,
+                                              builder: (ctx) =>
+                                                  AlertDialog(
+                                                title: Text(
+                                                    'Already Active'),
+                                                content: Text(
+                                                    'Hello, you are already in a group and therefore cannot join this one. Kindly leave current group to join this one'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(ctx)
+                                                          .pop();
+                                                    },
+                                                    child: Text('Okay'),
+                                                  )
+                                                ],
+                                              ),
+                                            );
+                                          } else {
+                                            var id = user['docID'];
+                                            var gid = user['gid'];
+                                            await _firestore
+                                                .collection(
+                                                    'active_members')
+                                                .add({
+                                              'username': username,
+                                              'isSafe': true,
+                                              'gid': gid,
+                                              'tracking': false,
+                                            });
+                                            await _firestore
+                                                .collection('users')
+                                                .doc(id)
+                                                .update({
+                                              'status': 'active',
+                                            });
+                                            await _firestore
+                                                .collection("invites")
+                                                .doc(id)
+                                                .delete();
+                                            setState(() {
+                                              Invites.remove(user);
+                                            });
+                                            await _firestore
+                                                .collection("groups")
+                                                .doc(gid)
+                                                .collection("safeTaps")
+                                                .add({
+                                              'username': username,
+                                              'safeTaps': 0,
+                                            });
+                                            if (setPin == 0) {
+                                              showDialog(
+                                                context: context,
+                                                builder: (ctx) =>
+                                                    AlertDialog(
+                                                  title: Text('Set pin'),
+                                                  content: Text(
+                                                      'Hey there, please set your pin in settings \n You will need the pin to leave your groups yourself'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator
+                                                            .pushNamed(
+                                                                context,
+                                                                CreatePin
+                                                                    .id);
+                                                      },
+                                                      child: Text('Okay'),
+                                                    )
+                                                  ],
+                                                ),
+                                              );
+                                            } else {
+                                              Navigator.pushNamed(context,
+                                                  ActiveGroup.id);
+                                            }
+                                          }
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: Colors.green,
+                                              borderRadius:
+                                                  new BorderRadius.all(
+                                                Radius.circular(10.0),
+                                              )),
+                                          child: Center(
+                                            child: Text('Accept',
+                                                style: TextStyle(
+                                                  color: Colors.black54,
+                                                )),
+                                          ),
+                                          width: 80,
+                                          height: 30,
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          var ID = user['docID'];
+                                          setState(() {
+                                            _firestore
+                                                .collection("invites")
+                                                .doc(ID)
+                                                .delete();
+                                            Invites.remove(user);
+                                          });
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey,
+                                              borderRadius:
+                                                  new BorderRadius.all(
+                                                Radius.circular(10.0),
+                                              )),
+                                          child: Center(
+                                            child: Text('Decline',
+                                                style: TextStyle(
+                                                  color: Colors.black54,
+                                                )),
+                                          ),
+                                          width: 80,
+                                          height: 30,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ]),
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                        ),
                       Menu(),
+
                     ],
+
                   ),
                 ),
               ),
             )
-          : Padding(
-              padding: EdgeInsets.only(top: 120),
-              child: Container(
-                color: kBackgroundColour,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
-                        child: Container(
-                          color: kMainColour,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(15.0),
-                                  child: Text(
-                                    'You do not have any invites. You can create '
-                                    'a group and send invites by clicking the button below',
-                                    textAlign: TextAlign.center,
+          : ModalProgressHUD(
+              inAsyncCall: indicator,
+              child: Padding(
+                padding: EdgeInsets.only(top: 120),
+                child: Container(
+                  color: kBackgroundColour,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
+                          child: Container(
+                            color: kMainColour,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: Text(
+                                      'You do not have any invites. You can create '
+                                      'a group and send invites by clicking the button below',
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, CreateGroup.id);
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.amberAccent,
-                                      borderRadius: new BorderRadius.all(
-                                        const Radius.circular(30.0),
-                                      )),
-                                  height: 50,
-                                  width: 150.00,
-                                  child: Center(
-                                    child: Text(
-                                      'Create Group',
-                                      style: TextStyle(
-                                        color: Colors.black,
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                        context, CreateGroup.id);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.amberAccent,
+                                        borderRadius: new BorderRadius.all(
+                                          const Radius.circular(30.0),
+                                        )),
+                                    height: 50,
+                                    width: 150.00,
+                                    child: Center(
+                                      child: Text(
+                                        'Create Group',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Menu(),
-                  ],
+                      Menu(),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import 'package:salama/Screens/create_screen2.dart';
+import 'package:salama/Screens/safe_word.dart';
 import 'create_screen1.dart';
 import 'invite_screen.dart';
 import'main_screen.dart';
@@ -8,30 +9,23 @@ import 'settings.dart';
 import 'package:salama/constants.dart';
 
 
-class HomePage extends StatefulWidget {
-  static String id = 'bottommenu';
-  final int currentIndex;
-  const HomePage({Key key, @required this.currentIndex})
-      : super(key: key);
+class PinMenu extends StatefulWidget {
+  static String id = 'pin_menu';
+
   @override
-  _HomePageState createState() => _HomePageState();
+  _PinMenuState createState() => _PinMenuState();
 }
 
-class _HomePageState extends State<HomePage> {
-  int selectedPage;
+class _PinMenuState extends State<PinMenu> {
+  int selectedPage = 0;
 
   final _pageOptions = [
     MainScreen(),
     Invite(),
     CreateGroup(),
-    ActiveGroup(),
+    SafeWord(),
     SettingsPage(),
   ];
-  @override
-  void initState() {
-    selectedPage = widget.currentIndex;
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
