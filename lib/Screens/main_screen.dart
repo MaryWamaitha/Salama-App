@@ -319,16 +319,20 @@ class _MainScreenState extends State<MainScreen> {
     getCurrentUser();
     getUserLocation();
     trackingMembers();
-    Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: true,
-    );
 
-    Workmanager().registerPeriodicTask(
-      "1",
-      fetchBackground,
-      frequency: Duration(minutes: 15),
-    );
+    
+// Todo Un comment the commands below.
+ 
+    // Workmanager().initialize(
+    //   callbackDispatcher,
+    //   isInDebugMode: true,
+    // );
+
+    // Workmanager().registerPeriodicTask(
+    //   "1",
+    //   fetchBackground,
+    //   frequency: Duration(minutes: 15),
+    // );
   }
 
   @override
@@ -386,3 +390,5 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
+

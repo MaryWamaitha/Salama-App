@@ -123,6 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         final user = await _auth.signInWithEmailAndPassword(
                             email: email,
                             password: password); //Implement login functionality.
+                            
                         if (user != null) {
                           setState(() {
                             showSpinner = false;
