@@ -7,6 +7,7 @@ import 'emergency_contacts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:salama/models/getUser.dart';
 import 'package:salama/Screens/edit_pin.dart';
+import 'login_screen.dart';
 
 class SettingsPage extends StatefulWidget {
   static String id = 'settings';
@@ -121,6 +122,33 @@ class _SettingsPageState extends State<SettingsPage> {
                       )
                     ],
                   )),
+             divider,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 5, 10, 10),
+                child: TextButton(
+                  onPressed: (){
+                    _auth.signOut();
+                    Navigator.pushNamed(context, LoginScreen.id);
+                  },
+                  child: Row(
+                    children: [
+                      Icon(Icons.exit_to_app,
+                      color: Colors.white,),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          'LogOut',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             ],
           ),
         ));

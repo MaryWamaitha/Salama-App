@@ -346,15 +346,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: null,
-        actions: <Widget>[
-          IconButton(
-              icon: Icon(Icons.close),
-              onPressed: () {
-                // // the firebase signout method
-                _auth.signOut();
-                Navigator.pushNamed(context, LoginScreen.id);
-              }),
-        ],
         title: Text('Salama'),
         backgroundColor: kMainColour,
       ),
