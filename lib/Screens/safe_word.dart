@@ -102,16 +102,11 @@ class _SafeWordState extends State<SafeWord> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kPageColour,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(100.0),
         child: AppBar(
           automaticallyImplyLeading: false,
-          shape: ContinuousRectangleBorder(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(120),
-              bottomRight: Radius.circular(120),
-            ),
-          ),
           title: Center(
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 10),
@@ -129,84 +124,82 @@ class _SafeWordState extends State<SafeWord> {
       body:  Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            decoration: BoxDecoration(
-                color: Colors.white70,
-                borderRadius: new BorderRadius.all(
-                  const Radius.circular(30.0),
-                )
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(30),
+          Padding(
+            padding: const EdgeInsets.only(top: 60,left: 30, right: 30),
+            child: Container(
+              color: Colors.black26,
               child: Center(
-                child: PinCodeTextField(
-                  length: 4,
-                  obscureText: false,
-                  animationType: AnimationType.fade,
-                  keyboardType: TextInputType.number,
-                  pinTheme: PinTheme(
-                    shape: PinCodeFieldShape.box,
-                    inactiveColor: Colors.green,
-                    activeFillColor: Colors.green,
-                    fieldHeight: 50,
-                    fieldWidth: 40,
-                    selectedFillColor: Colors.yellow,
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: PinCodeTextField(
+                    length: 4,
+                    obscureText: false,
+                    animationType: AnimationType.fade,
+                    keyboardType: TextInputType.number,
+                    pinTheme: PinTheme(
+                      shape: PinCodeFieldShape.box,
+                      inactiveColor: Colors.amberAccent,
+                      activeFillColor: Colors.green,
+                      fieldHeight: 50,
+                      fieldWidth: 40,
+                      selectedFillColor: Colors.yellow,
+                    ),
+                    animationDuration: const Duration(milliseconds: 300),
+                    controller: textEditingController,
+                    onCompleted: (v) async {
+                      if (pin != currentText) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(' Pins dont match'),
+                            content: Text(
+                                'The pin entered does not much the password on record'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                },
+                                child: Text('Okay'),
+                              )
+                            ],
+                          ),
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(' Safe Word' ),
+                            content: Text(
+                                'The safe word for the group is $safeWord'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          HomePage(currentIndex: 3,),
+                                    ),
+                                  );
+                                },
+                                child: Text('Go back to group'),
+                              )
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                    onChanged: (value) {
+                      debugPrint(value);
+                      setState(() {
+                        currentText = value;
+                      });
+                    },
+                    beforeTextPaste: (text) {
+                      return true;
+                    },
+                    appContext: context,
                   ),
-                  animationDuration: const Duration(milliseconds: 300),
-                  controller: textEditingController,
-                  onCompleted: (v) async {
-                    if (pin != currentText) {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text(' Pins dont match'),
-                          content: Text(
-                              'The pin entered does not much the password on record'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(ctx).pop();
-                              },
-                              child: Text('Okay'),
-                            )
-                          ],
-                        ),
-                      );
-                    } else {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text(' Safe Word' ),
-                          content: Text(
-                              'The safe word for the group is $safeWord'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        HomePage(currentIndex: 3,),
-                                  ),
-                                );
-                              },
-                              child: Text('Go back to group'),
-                            )
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                  onChanged: (value) {
-                    debugPrint(value);
-                    setState(() {
-                      currentText = value;
-                    });
-                  },
-                  beforeTextPaste: (text) {
-                    return true;
-                  },
-                  appContext: context,
                 ),
               ),
             ),

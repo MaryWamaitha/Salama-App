@@ -58,16 +58,11 @@ class _CreatePinState extends State<CreatePin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kPageColour,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(100.0),
         child: AppBar(
           automaticallyImplyLeading: false,
-          shape: ContinuousRectangleBorder(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(120),
-              bottomRight: Radius.circular(120),
-            ),
-          ),
           title: Center(
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 10),
@@ -83,65 +78,55 @@ class _CreatePinState extends State<CreatePin> {
         ),
       ),
       body: safety != false
-          ? Container(
-              color: kBackgroundColour,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Center(
+          ? Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 60,left: 30, right: 30),
+                child: Container(
+                  color: Colors.black26,
+                  child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 40, 10, 30),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.white70,
-                            borderRadius: new BorderRadius.all(
-                              const Radius.circular(30.0),
-                            )),
-                        child: Padding(
-                          padding: const EdgeInsets.all(30),
-                          child: Center(
-                            child: PinCodeTextField(
-                              length: 4,
-                              keyboardType: TextInputType.number,
-                              obscureText: false,
-                              animationType: AnimationType.fade,
-                              pinTheme: PinTheme(
-                                shape: PinCodeFieldShape.box,
-                                inactiveColor: Colors.green,
-                                activeFillColor: Colors.green,
-                                fieldHeight: 50,
-                                fieldWidth: 40,
-                                selectedFillColor: Colors.yellow,
-                              ),
-                              animationDuration:
-                                  const Duration(milliseconds: 300),
-                              controller: textEditingController,
-                              onCompleted: (v) {
-                                Navigator.pushNamed(context, RepeatPin.id,
-                                    arguments: {
-                                      "pin": currentText,
-                                    });
-                              },
-                              onChanged: (value) {
-                                debugPrint(value);
-                                setState(() {
-                                  currentText = value;
-                                });
-                              },
-                              beforeTextPaste: (text) {
-                                return true;
-                              },
-                              appContext: context,
-                            ),
-                          ),
+                      padding: const EdgeInsets.all(30),
+                      child: PinCodeTextField(
+                        length: 4,
+                        obscureText: false,
+                        animationType: AnimationType.fade,
+                        keyboardType: TextInputType.number,
+                        pinTheme: PinTheme(
+                          shape: PinCodeFieldShape.box,
+                          inactiveColor: Colors.amberAccent,
+                          activeFillColor: Colors.green,
+                          fieldHeight: 50,
+                          fieldWidth: 40,
+                          selectedFillColor: Colors.yellow,
                         ),
+                        animationDuration: const Duration(milliseconds: 300),
+                        controller: textEditingController,
+                        onCompleted: (v) {
+                          Navigator.pushNamed(context, RepeatPin.id,
+                              arguments: {
+                                "pin": currentText,
+                              });
+                        },
+                        onChanged: (value) {
+                          debugPrint(value);
+                          setState(() {
+                            currentText = value;
+                          });
+                        },
+                        beforeTextPaste: (text) {
+                          return true;
+                        },
+                        appContext: context,
                       ),
                     ),
                   ),
-                  Menu(),
-                ],
+                ),
               ),
-            )
+              Menu(),
+            ],
+          )
           : Padding(
               padding: EdgeInsets.only(top: 120),
               child: Container(

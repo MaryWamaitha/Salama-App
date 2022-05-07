@@ -96,7 +96,6 @@ class _EditPinState extends State<EditPin> {
         preferredSize: Size.fromHeight(100.0),
         child: AppBar(
           automaticallyImplyLeading: false,
-
           title: Center(
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 15),
