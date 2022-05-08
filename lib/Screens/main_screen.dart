@@ -15,6 +15,7 @@ import '../Components/icons.dart';
 import '../models/getUser.dart';
 import 'package:salama/Components/marker_generator.dart';
 import 'package:firebase_core/firebase_core.dart';
+
 const fetchBackground = "fetchBackground";
 Position ULocation;
 String status;
@@ -23,32 +24,32 @@ String docuID;
 getDetails Details = getDetails();
 
 //initiating background task for getting location
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    await Firebase.initializeApp();
-    switch (task) {
-      case fetchBackground:
-        ULocation = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.bestForNavigation);
-        List<DocumentSnapshot> activity = await Details.getUserDetail();
-        if (activity.length > 0) {
-          var x = selected[0].data() as Map;
-          //setting the username, docuID and status to the values gotten from the database
-          //getting userID so that we use it to update location
-          docuID = selected[0].id;
-          status = x['status'];
-          if (status == 'active') {
-            // if a user is active, save their location to database anytime it is changed
-            await _firestore.collection("users").doc(docuID).update({
-              'location': GeoPoint(ULocation.latitude, ULocation.longitude),
-            });
-          };
-        }
-        break;
-    }
-    return Future.value(true);
-  });
-}
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) async {
+//     await Firebase.initializeApp();
+//     switch (task) {
+//       case fetchBackground:
+//         ULocation = await Geolocator.getCurrentPosition(
+//             desiredAccuracy: LocationAccuracy.bestForNavigation);
+//         List<DocumentSnapshot> activity = await Details.getUserDetail();
+//         if (activity.length > 0) {
+//           var x = selected[0].data() as Map;
+//           //setting the username, docuID and status to the values gotten from the database
+//           //getting userID so that we use it to update location
+//           docuID = selected[0].id;
+//           status = x['status'];
+//           if (status == 'active') {
+//             // if a user is active, save their location to database anytime it is changed
+//             await _firestore.collection("users").doc(docuID).update({
+//               'location': GeoPoint(ULocation.latitude, ULocation.longitude),
+//             });
+//           };
+//         }
+//         break;
+//     }
+//     return Future.value(true);
+//   });
+// }
 
 class MainScreen extends StatefulWidget {
   static String id = 'main_screen';
@@ -72,18 +73,18 @@ class _MainScreenState extends State<MainScreen> {
   String messageText;
   markerGenerator mark = markerGenerator();
 
-
-
   //getting location permissions
   Future<void> requestLocationPermission() async {
     final serviceStatusLocation =
         await perm.Permission.locationWhenInUse.isGranted;
+    final ser = await perm.Permission.locationWhenInUse.serviceStatus.isEnabled;
 
     bool isLocation = serviceStatusLocation == ServiceStatus.enabled;
 
     final status = await perm.Permission.locationWhenInUse.request();
-
+    print(status);
     if (status == perm.PermissionStatus.granted) {
+      
       print('Permission Granted');
     } else if (status == perm.PermissionStatus.denied) {
       print('Permission denied');
@@ -109,6 +110,7 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     permission = await Geolocator.checkPermission();
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
@@ -180,8 +182,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
-
-
       // final bitmapDescriptor = await mark.createBitmapDescriptorFromIconData(
       //     Icons.import_contacts, Colors.amber, Colors.white, Colors.black);
       _markers.removeWhere((m) => m.markerId.value == '$username');
@@ -192,7 +192,7 @@ class _MainScreenState extends State<MainScreen> {
         "$image",
       );
       setState(() {
-        _markers.add (
+        _markers.add(
           Marker(
             draggable: true,
             markerId: MarkerId('$username'),
@@ -200,7 +200,7 @@ class _MainScreenState extends State<MainScreen> {
             infoWindow: InfoWindow(
               title: '$username',
             ),
-            icon:markerbitmap,
+            icon: markerbitmap,
           ),
         );
       });
@@ -233,24 +233,24 @@ class _MainScreenState extends State<MainScreen> {
     //the current user will be null if nobody is signed in
     try {
       List<DocumentSnapshot> activity = await Details.getUserDetail();
-        if (activity.length > 0) {
-          var x = selected[0].data() as Map;
-          //setting the username, docuID and status to the values gotten from the database
-          setState(() {
-            username = x['username'];
-            //getting userID so that we use it to update location
-            docuID = selected[0].id;
-            status = x['status'];
+      if (activity.length > 0) {
+        var x = selected[0].data() as Map;
+        //setting the username, docuID and status to the values gotten from the database
+        setState(() {
+          username = x['username'];
+          //getting userID so that we use it to update location
+          docuID = selected[0].id;
+          status = x['status'];
+        });
+        var tokenID = x['tokenID'];
+        OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
+        var Notifystatus = await OneSignal.shared.getDeviceState();
+        String deviceTokenID = Notifystatus.userId;
+        if (tokenID != deviceTokenID) {
+          _firestore.collection("users").doc(docuID).update({
+            'tokenID': deviceTokenID,
           });
-          var tokenID = x['tokenID'];
-          OneSignal.shared.setAppId("25effc79-b2cc-460d-a1d0-dfcc7cb65146");
-          var Notifystatus = await OneSignal.shared.getDeviceState();
-          String deviceTokenID = Notifystatus.userId;
-          if (tokenID != deviceTokenID) {
-            _firestore.collection("users").doc(docuID).update({
-              'tokenID': deviceTokenID,
-            });
-          }
+        }
         getGroupMembers();
       }
     } catch (e) {
@@ -322,14 +322,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    requestLocationPermission;
+    requestLocationPermission();
     getCurrentUser();
     getUserLocation();
     trackingMembers();
 
-    
 // Todo Un comment the commands below.
- 
+
     // Workmanager().initialize(
     //   callbackDispatcher,
     //   isInDebugMode: true,
@@ -340,14 +339,14 @@ class _MainScreenState extends State<MainScreen> {
     //   fetchBackground,
     //   frequency: Duration(minutes: 15),
     // );
-    Workmanager().registerPeriodicTask(
-      "1",
-      fetchBackground,
-      frequency: Duration(minutes: 15),
-      inputData: <String, dynamic>{
-        'docuID': docuID,
-      },
-    );
+    // Workmanager().registerPeriodicTask(
+    //   "1",
+    //   fetchBackground,
+    //   frequency: Duration(minutes: 15),
+    //   inputData: <String, dynamic>{
+    //     'docuID': docuID,
+    //   },
+    // );
   }
 
   @override
@@ -405,5 +404,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-
-
