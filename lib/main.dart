@@ -5,6 +5,7 @@ import 'package:salama/Screens/bottommenu.dart';
 import 'package:salama/Screens/create_screen1.dart';
 import 'package:salama/Screens/create_pin.dart';
 import 'package:salama/Screens/create_screen2.dart';
+import 'package:salama/Screens/edit_pin.dart';
 import 'package:salama/Screens/emergency_contacts.dart';
 import 'package:salama/Screens/leave_group.dart';
 import 'package:salama/Screens/moving_screen.dart';
@@ -58,6 +59,7 @@ class Salama extends StatelessWidget {
         LeaveGroup.id: (context) => LeaveGroup(),
         SafeWord.id: (context) => SafeWord(),
         FinalCreate.id: (context) => FinalCreate(),
+        EditPin.id: (context) => EditPin(),
       },
       //TODO: If user is already logged in on device, they should be redirected to the main_screen page
       // home: LoginScreen(),

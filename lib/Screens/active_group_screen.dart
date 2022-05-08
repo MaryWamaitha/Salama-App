@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:salama/Screens/bottommenu.dart';
 import 'package:salama/Screens/create_screen1.dart';
 import 'package:salama/Screens/pin_menu.dart';
 import 'package:salama/Screens/safe_word.dart';
 import 'main_screen.dart';
+import 'dart:math';
 import '../constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
@@ -12,7 +14,7 @@ import 'package:salama/constants.dart';
 import '../Components/icons.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import '../models/calculateDistance.dart';
+import 'package:salama/models/calculateDistance.dart';
 import '../models/getUser.dart';
 import 'package:salama/Screens/leave_group.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
@@ -83,19 +85,19 @@ class _ActiveGroupState extends State<ActiveGroup> {
   bool sent = false;
   String place;
   bool indicator = true;
-  calculateDistance calcDist = calculateDistance();
   getDetails Details = getDetails();
-  static const fetchBackground = "fetchBackground";
+  static const backgroundTracking = "backgroundTracking";
 
   //the following function runs the activating function and also the tracking instructions if the app
   //is in the background
   void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
       switch (task) {
-        case fetchBackground:
+        case backgroundTracking:
           getUserLocation();
           if (tracking == false) {
             Timer.periodic(Duration(seconds: 60), (timer) async {
+              calculateDistance calcDist = calculateDistance();
               var value = calcDist.trackingUser(userLatitude, userLongitude,
                   groupLatitude, groupLongitude, 1000);
               //if the activity is now true, updating the tracking field in database and switching of timer
@@ -135,6 +137,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
               }
             });
           } else {
+            calculateDistance calcDist = calculateDistance();
             var value = calcDist.trackingUser(userLatitude, userLongitude,
                 groupLatitude, groupLongitude, Distance);
             //if the user is not safe ( tracking User function returned a false)
@@ -191,50 +194,42 @@ class _ActiveGroupState extends State<ActiveGroup> {
             .get();
         //once we find the record, we get the groupID from it. The group ID is used in loading the stream
         final List<DocumentSnapshot> groupDets = user.docs;
+        activeID = groupDets[0].id;
         var record = groupDets[0].data() as Map;
         groupID = record['gid'];
+        tracking = record['tracking'];
         var Notifystatus = await OneSignal.shared.getDeviceState();
         String tokenId = Notifystatus.userId;
+        print('the user active is $record');
+        getGroupDetails();
       }
     } catch (e) {
       print(e);
     }
   }
 
-  //every 20 seconds, get the user location from the database
-  void startLocating() {
-    Timer.periodic(Duration(seconds: 20), (timer) async {
-      getUserLocation();
-    });
-  }
   void Indicator() {
-    Timer.periodic(Duration(seconds: 4), (timer) async {
-     setState(() {
-       indicator = false;
-     });
-     timer.cancel();
+    Timer.periodic(Duration(seconds: 3), (timer) async {
+      setState(() {
+        indicator = false;
+      });
+      timer.cancel();
     });
   }
 
   //method for getting user location from database and updating it locally
-  void getUserLocation() async {
-    try {
+  Future <LatLng> getUserLocation() async {
       //this returns a list of document snapshots with user record from user table
       List<DocumentSnapshot> result = await Details.getUserDetail();
       if (result.length > 0) {
         //changing the returned data to a map so that we can read it
         var x = result[0].data() as Map;
-        setState(() {
           //getting the user location from the database and putting it in a local variable
           userLocation =
               LatLng(x['location'].latitude, x['location'].longitude);
-          userLatitude = x['location'].latitude;
-          userLongitude = x['location'].longitude;
-        });
       }
-    } catch (e) {
-      print(e);
-    }
+      return userLocation;
+
   }
 
   //getting group details which are displayed on the page
@@ -256,6 +251,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
           groupLongitude = details['Location'].longitude;
           destination = LatLng(
               details['Location'].latitude, details['Location'].longitude);
+          print('the group is $details');
         });
       }
     });
@@ -299,12 +295,27 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //or false. true means you are now at location and tracking can begin. False means that you are not
   //yet at location and tracking cannot begin
   void activateTimer() {
-    if (tracking == false) {
       Timer.periodic(Duration(minutes: 2), (timer) async {
-        var value = calcDist.trackingUser(
-            userLatitude, userLongitude, groupLatitude, groupLongitude, 1000);
+        calculateDistance calcDist = calculateDistance();
+        var userCoord = await getUserLocation();
+        userLatitude = userCoord.latitude;
+        userLongitude=userCoord.longitude;
+        bool active;
+        var p = 0.017453292519943295;
+        //method for calculating distance between two points
+        var a = 0.5 -
+            cos((groupLatitude - userLatitude) * p) / 2 +
+            cos(userLatitude * p) * cos(groupLatitude * p) * (1 - cos((groupLongitude - userLongitude) * p)) / 2;
+        double distance = 12742 * asin(sqrt(a));
+        distance = distance * 1000;
+        if (distance > 1000) {
+          active = false;
+        } else {
+          active = true;
+        }
         //if the activity is now true, updating the tracking field in database and switching of timer
-        if (value == true) {
+        print('the activating is $active and the distance is $distance');
+        if (active == true) {
           //set the tracking to true in database
           await _firestore.collection("active_members").doc(activeID).update({
             'tracking': true,
@@ -315,20 +326,31 @@ class _ActiveGroupState extends State<ActiveGroup> {
           trackingTimer();
         }
       });
-    } else {
-      //if the user tracking was already true from database, run the trackingTimer immediatly
-      trackingTimer();
-    }
   }
 
   //function that runs every 60 seconds and checks if you are still at location
   void trackingTimer() {
     Timer.periodic(Duration(seconds: 60), (timer) async {
-      var value = calcDist.trackingUser(
-          userLatitude, userLongitude, groupLatitude, groupLongitude, Distance);
-      //if the user is not safe ( tracking User function returned a false)
-      //the isSafe value is updated in the database as false ( this also changes the icon colour)
-      if (value == false) {
+      calculateDistance calcDist = calculateDistance();
+      LatLng userCoord = await getUserLocation();
+      userLatitude = userCoord.latitude;
+      userLongitude=userCoord.longitude;
+      bool active;
+      var p = 0.017453292519943295;
+      //method for calculating distance between two points
+      var a = 0.5 -
+          cos((groupLatitude - userLatitude) * p) / 2 +
+          cos(userLatitude * p) * cos(groupLatitude * p) * (1 - cos((groupLongitude - userLongitude) * p)) / 2;
+      double distance = 12742 * asin(sqrt(a));
+      distance = distance * 1000;
+      if (distance > 1000) {
+        active = false;
+      } else {
+        active = true;
+      }
+      //if the user is not safe is now true, updating the isSafe value in DB
+      print('the user safety is $active and the distance is $distance');
+      if (active == false) {
         await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': false,
         });
@@ -354,12 +376,10 @@ class _ActiveGroupState extends State<ActiveGroup> {
   @override
   void initState() {
     super.initState();
+    configOneSignel();
     Indicator();
     getUserDetails();
-    getGroupDetails();
     activateTimer();
-    startLocating();
-    configOneSignel();
     Workmanager().initialize(
       callbackDispatcher,
       isInDebugMode: true,
@@ -367,7 +387,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
 
     Workmanager().registerPeriodicTask(
       "1",
-      fetchBackground,
+      backgroundTracking,
       frequency: Duration(minutes: 15),
     );
   }
@@ -396,154 +416,154 @@ class _ActiveGroupState extends State<ActiveGroup> {
       //if the user status is active, the UI loads stream, leave group button etc
       body: status == 'active'
           ? SafeArea(
-            child:
-            indicator == false ?
-            Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child:
-                          Text('Group: $groupName', style: kMajorHeadings),
-                    ),
-                  ),
-                  MembersStream(),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, SafeWord.id);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(60.0, 0, 60, 0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: kMainColour,
-                            borderRadius: new BorderRadius.all(
-                              const Radius.circular(30.0),
-                            )),
-                        height: 50,
-                        width: 200.00,
-                        child: Center(
-                          child: Text(
-                            'View Group Safe Word',
-                            style: TextStyle(
-                              color: Colors.black,
-                            ),
-                          ),
+          child:
+          indicator == false ?
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child:
+                  Text('Group: $groupName', style: kMajorHeadings),
+                ),
+              ),
+              MembersStream(),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, SafeWord.id);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(60.0, 0, 60, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: kMainColour,
+                        borderRadius: new BorderRadius.all(
+                          const Radius.circular(30.0),
+                        )),
+                    height: 50,
+                    width: 200.00,
+                    child: Center(
+                      child: Text(
+                        'View Group Safe Word',
+                        style: TextStyle(
+                          color: Colors.white70,
                         ),
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, LeaveGroup.id);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.amberAccent,
-                            borderRadius: new BorderRadius.all(
-                              const Radius.circular(30.0),
-                            )),
-                        height: 50,
-                        width: 170.00,
-                        child: Center(
-                          child: Text(
-                            'Leave Group',
-                            style: TextStyle(
-                              color: kMainColour,
-                            ),
-                          ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, LeaveGroup.id);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.amberAccent,
+                        borderRadius: new BorderRadius.all(
+                          const Radius.circular(30.0),
+                        )),
+                    height: 50,
+                    width: 170.00,
+                    child: Center(
+                      child: Text(
+                        'Leave Group',
+                        style: TextStyle(
+                          color: kMainColour,
                         ),
                       ),
                     ),
                   ),
-                  Menu(),
-                ],
-            ) : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top:
-                    60, left: 40),
-                    child: Row(
+                ),
+              ),
+            ],
+          ) : Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top:
+                  60, left: 40),
+                  child: Row(
+                    children: [
+                      Text('Loading Group'),
+                      CircularProgressIndicator(
+                        color: Colors.amberAccent,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          )
+      )
+      //if the user is not active in any group, they are informed that they are not in any group
+          : Padding(
+        padding: EdgeInsets.only(top: 120),
+        child: Container(
+          color: kBackgroundColour,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
+                  child: Container(
+                    color: kMainColour,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Loading Group'),
-                        CircularProgressIndicator(
-                          color: Colors.amberAccent,
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 15.0),
+                            child: Text(
+                              'You are not in any group. Click the button below to create a group ',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => HomePage(currentIndex: 2)),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                                60.0, 0, 60, 0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.amberAccent,
+                                  borderRadius: new BorderRadius.all(
+                                    const Radius.circular(30.0),
+                                  )),
+                              height: 50,
+                              width: 150.00,
+                              child: Center(
+                                child: Text(
+                                  'Create a group',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                Menu()
-              ],
-            )
-          )
-          //if the user is not active in any group, they are informed that they are not in any group
-          : Padding(
-              padding: EdgeInsets.only(top: 120),
-              child: Container(
-                color: kBackgroundColour,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(25, 0, 25, 0),
-                        child: Container(
-                          color: kMainColour,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 15.0),
-                                  child: Text(
-                                    'You are not in any group. Click the button below to create a group ',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, CreateGroup.id);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      60.0, 0, 60, 0),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        color: Colors.amberAccent,
-                                        borderRadius: new BorderRadius.all(
-                                          const Radius.circular(30.0),
-                                        )),
-                                    height: 50,
-                                    width: 150.00,
-                                    child: Center(
-                                      child: Text(
-                                        'Create a group',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Menu(),
-                  ],
-                ),
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -650,111 +670,112 @@ class MemberStatus extends StatelessWidget {
           //if the user is safe, show a green check box and if not a red alert
           isSafe == true
               ? Icon(
-                  Icons.check_box,
-                  color: Colors.green,
-                  size: 40,
-                )
+            Icons.check_box,
+            color: Colors.green,
+            size: 40,
+          )
               : Icon(
-                  Icons.warning,
-                  color: Colors.red,
-                  size: 40,
-                ),
+            Icons.warning,
+            color: Colors.red,
+            size: 40,
+          ),
 
           isMe == false && isSafe == false
               ? TextButton(
-                  onPressed: () async {
-                    //accessing the safeTaps collection which is nested in groups
-                    final QuerySnapshot safeDetails = await _firestore
-                        .collection('active_members')
-                        .doc(groupID)
-                        .collection('safeTaps')
-                        .where('username', isEqualTo: member)
-                        .get();
-                    final List<DocumentSnapshot> selected = safeDetails.docs;
-                    var result = selected[0].data() as Map;
-                    var safeID = selected[0].id;
-                    safeTaps = result['safeTaps'];
-                    //checks if the button has already been clicked for this user to avoid one person clicking for both safeTaps
-                    if (tapped == false) {
-                      //if the button has not been clicked, increses the safeTaps by 1 and sets the tapped to true such that the user cannot click this again
-                      safeTaps = safeTaps + 1;
-                      tapped = true;
-                      //if the safe taps are no equal to or greater than the min approvals, the user who was unsafe is now marked as safe, their safeTaps at
-                      if (safeTaps >= minApprovals) {
-                        await _firestore
-                            .collection("active_members")
-                            .doc(memberID)
-                            .update({
-                          'isSafe': true,
-                        });
-                        await _firestore
-                            .collection("groups")
-                            .doc(groupID)
-                            .collection('safeTaps')
-                            .doc(safeID)
-                            .update({
-                          'safeTaps': 0,
-                        });
-                        //sending notifications using the tokenID from the getMemberDetails function that was passed
-                        _handleSendNotification(
-                            tokenIDList,
-                            '$username marked $member as safe',
-                            '$member had moved too far and $username has marked them as safe. \n');
-                      } else {
-                        //if the safe Taps are not equal to minimum approvals, , update the users safe Tap number and alert the person who clicked that
-                        //more safe taps are required.
-                        await _firestore
-                            .collection("groups")
-                            .doc(groupID)
-                            .collection('safeTaps')
-                            .doc(safeID)
-                            .update({
-                          'safeTaps': safeTaps,
-                        });
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text(' Safety Alert'),
-                            content: Text(
-                                'Please note that another member is required to click \n this for the user to be marked as safe'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(ctx).pop();
-                                },
-                                child: Text('Okay'),
-                              )
-                            ],
-                          ),
-                        );
-                        //sending notifications to the rest of the group on more safe taps being needed.
-                        _handleSendNotification(
-                            tokenIDList,
-                            '$username marked $member as safe',
-                            '$member had moved too far and $username has marked them as safe. \n If you are sure they are safe, please log in and click safe ignore on \n active group page ');
-                      }
-                      //if the user had already clicked the button, they are alerted that they cannot click it again
-                    } else {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text(' Already clicked'),
-                          content: Text(
-                              'Please note that you have already clicked the button and cant click again'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(ctx).pop();
-                              },
-                              child: Text('Okay'),
-                            )
-                          ],
-                        ),
-                      );
-                    }
-                  },
-                  child: Text('Safe(Ignore)'),
-                )
+            onPressed: () async {
+              //accessing the safeTaps collection which is nested in groups
+              final QuerySnapshot safeDetails = await _firestore
+                  .collection('groups')
+                  .doc(groupID)
+                  .collection('safeTaps')
+                  .where('username', isEqualTo: member)
+                  .get();
+              final List<DocumentSnapshot> selected = safeDetails.docs;
+              var result = selected[0].data() as Map;
+              var safeID = selected[0].id;
+              safeTaps = result['safeTaps'];
+              print( 'the safe taps are $safeTaps');
+              //checks if the button has already been clicked for this user to avoid one person clicking for both safeTaps
+              if (tapped == false) {
+                //if the button has not been clicked, increses the safeTaps by 1 and sets the tapped to true such that the user cannot click this again
+                safeTaps = safeTaps + 1;
+                tapped = true;
+                //if the safe taps are no equal to or greater than the min approvals, the user who was unsafe is now marked as safe, their safeTaps at
+                if (safeTaps >= minApprovals) {
+                  await _firestore
+                      .collection("active_members")
+                      .doc(memberID)
+                      .update({
+                    'isSafe': true,
+                  });
+                  await _firestore
+                      .collection("groups")
+                      .doc(groupID)
+                      .collection('safeTaps')
+                      .doc(safeID)
+                      .update({
+                    'safeTaps': 0,
+                  });
+                  //sending notifications using the tokenID from the getMemberDetails function that was passed
+                  _handleSendNotification(
+                      tokenIDList,
+                      '$username marked $member as safe',
+                      '$member had moved too far and $username has marked them as safe. \n');
+                } else {
+                  //if the safe Taps are not equal to minimum approvals, , update the users safe Tap number and alert the person who clicked that
+                  //more safe taps are required.
+                  await _firestore
+                      .collection("groups")
+                      .doc(groupID)
+                      .collection('safeTaps')
+                      .doc(safeID)
+                      .update({
+                    'safeTaps': safeTaps,
+                  });
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: Text(' Safety Alert'),
+                      content: Text(
+                          'Please note that another member is required to click this for the user to be marked as safe'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                          },
+                          child: Text('Okay'),
+                        )
+                      ],
+                    ),
+                  );
+                  //sending notifications to the rest of the group on more safe taps being needed.
+                  _handleSendNotification(
+                      tokenIDList,
+                      '$username marked $member as safe',
+                      '$member had moved too far and $username has marked them as safe. \n If you are sure they are safe, please log in and click safe ignore on \n active group page ');
+                }
+                //if the user had already clicked the button, they are alerted that they cannot click it again
+              } else {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(' Already clicked'),
+                    content: Text(
+                        'Please note that you have already clicked the button and cant click again'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                        },
+                        child: Text('Okay'),
+                      )
+                    ],
+                  ),
+                );
+              }
+            },
+            child: Text('Safe(Ignore)'),
+          )
               : Text('$leaveGroup'),
         ],
       ),

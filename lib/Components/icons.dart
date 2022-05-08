@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import '../constants.dart';
 import '../Screens/create_screen1.dart';
-import '../Screens/trial_screen.dart';
 import '../Screens/invite_screen.dart';
-import '../Screens/moving_screen.dart';
 import '../Screens/settings.dart';
-import '../Screens/main_screen.dart';
+import 'package:salama/Screens/bottommenu.dart';
+
 
 class MenuItem extends StatelessWidget {
   MenuItem({this.icon, this.label, this.page});
   final IconData icon;
   final String label;
-  final String page;
+  final int page;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -24,7 +23,9 @@ class MenuItem extends StatelessWidget {
             size: 30.0,
           ),
           onPressed: () {
-            Navigator.pushNamed(context, page);
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage(currentIndex: page)));
           },
         ),
         Text(
@@ -57,29 +58,29 @@ class Menu extends StatelessWidget {
             MenuItem(
               icon: Icons.home,
               label: 'Home',
-              page: MainScreen.id,
+              page: 0,
             ),
             MenuItem(
               icon: Icons.person_add,
               label: 'Invites',
-              page: Invite.id,
+              page: 1,
             ),
             MenuItem(
               icon: Icons.people,
               label: 'Create Group',
-              page: CreateGroup.id,
+              page: 2,
               //Go to Group screen,
             ),
             MenuItem(
               icon: Icons.location_on_rounded,
               label: 'Active Group',
-              page: ActiveGroup.id,
+              page: 3,
             ),
 
             MenuItem(
               icon: Icons.settings,
               label: 'Settings',
-              page: SettingsPage.id,
+              page: 4,
             ),
           ],
         ),

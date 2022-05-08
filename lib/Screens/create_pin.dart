@@ -23,8 +23,9 @@ class _CreatePinState extends State<CreatePin> {
   String username;
   String userID;
   bool safety = true;
+  int set = 0;
 
-  void isSafe () async {
+  void isSafe() async {
     try {
       List<DocumentSnapshot> result = await Details.getUserDetail();
       if (result.length > 0) {
@@ -33,6 +34,7 @@ class _CreatePinState extends State<CreatePin> {
           userID = selected[0].id;
           username = x['username'];
         });
+
         final QuerySnapshot user = await _firestore
             .collection('active_members')
             .where('username', isEqualTo: username)
@@ -43,10 +45,11 @@ class _CreatePinState extends State<CreatePin> {
           safety = returned[0]['isSafe'];
         });
       }
-      } catch (e) {
+    } catch (e) {
       print(e);
     }
   }
+
   void initState() {
     super.initState();
     isSafe();
@@ -55,16 +58,11 @@ class _CreatePinState extends State<CreatePin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: kPageColour,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(100.0),
         child: AppBar(
           automaticallyImplyLeading: false,
-          shape: ContinuousRectangleBorder(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(120),
-              bottomRight: Radius.circular(120),
-            ),
-          ),
           title: Center(
             child: Padding(
               padding: EdgeInsets.only(top: 50.0, bottom: 10),
@@ -80,32 +78,24 @@ class _CreatePinState extends State<CreatePin> {
         ),
       ),
       body: safety != false
-          ? Container(
-        color: kBackgroundColour,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10,40,10,30),
+          ? Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 60,left: 30, right: 30),
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white70,
-                      borderRadius: new BorderRadius.all(
-                        const Radius.circular(30.0),
-                      )
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(30),
-                    child: Center(
+                  color: Colors.black26,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(30),
                       child: PinCodeTextField(
                         length: 4,
-                        keyboardType: TextInputType.number,
                         obscureText: false,
                         animationType: AnimationType.fade,
+                        keyboardType: TextInputType.number,
                         pinTheme: PinTheme(
                           shape: PinCodeFieldShape.box,
-                          inactiveColor: Colors.green,
+                          inactiveColor: Colors.amberAccent,
                           activeFillColor: Colors.green,
                           fieldHeight: 50,
                           fieldWidth: 40,
@@ -114,9 +104,10 @@ class _CreatePinState extends State<CreatePin> {
                         animationDuration: const Duration(milliseconds: 300),
                         controller: textEditingController,
                         onCompleted: (v) {
-                          Navigator.pushNamed(context, RepeatPin.id, arguments: {
-                            "pin": currentText,
-                          });
+                          Navigator.pushNamed(context, RepeatPin.id,
+                              arguments: {
+                                "pin": currentText,
+                              });
                         },
                         onChanged: (value) {
                           debugPrint(value);
@@ -133,67 +124,67 @@ class _CreatePinState extends State<CreatePin> {
                   ),
                 ),
               ),
-            ),
-            Menu(),
-          ],
-        ),
-      ) : Padding(
-        padding: EdgeInsets.only(top: 120),
-        child: Container(
-          color: kBackgroundColour,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(25,15,25,0),
-                  child: Container(
-                    color: kMainColour,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 15.0),
-                            child: Text(
-                                'You cannot set a pin while unsafe in a group. Please ask \n your friends to mark you as safe for you to be able to set your pin'),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, ActiveGroup.id);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(60.0, 30, 60, 60),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.amberAccent,
-                                  borderRadius: new BorderRadius.all(
-                                    const Radius.circular(30.0),
-                                  )),
-                              height: 50,
-                              width: 150.00,
-                              child: Center(
-                                child: Text(
-                                  'Go to Active Group',
-                                  style: TextStyle(
-                                    color: Colors.black,
+              Menu(),
+            ],
+          )
+          : Padding(
+              padding: EdgeInsets.only(top: 120),
+              child: Container(
+                color: kBackgroundColour,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(25, 15, 25, 0),
+                        child: Container(
+                          color: kMainColour,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 15.0),
+                                  child: Text(
+                                      'You cannot set a pin while unsafe in a group. Please ask \n your friends to mark you as safe for you to be able to set your pin'),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, ActiveGroup.id);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      60.0, 30, 60, 60),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        color: Colors.amberAccent,
+                                        borderRadius: new BorderRadius.all(
+                                          const Radius.circular(30.0),
+                                        )),
+                                    height: 50,
+                                    width: 150.00,
+                                    child: Center(
+                                      child: Text(
+                                        'Go to Active Group',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Menu()
+                  ],
                 ),
               ),
-              Menu()
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
