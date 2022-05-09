@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salama/Screens/active_group_screen.dart';
 import 'package:salama/Screens/bottommenu.dart';
 import 'package:salama/Screens/create_screen1.dart';
@@ -11,6 +12,7 @@ import 'package:salama/Screens/leave_group.dart';
 import 'package:salama/Screens/moving_screen.dart';
 import 'package:salama/Screens/repeat_pin.dart';
 import 'package:salama/Screens/safe_word.dart';
+import 'Provider/appBloc.dart';
 import 'Screens/welcome_screen.dart';
 import 'Screens/registration_screen.dart';
 import 'Screens/main_screen.dart';
@@ -32,38 +34,41 @@ void main() async {
 class Salama extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData.dark().copyWith(
-        textTheme: TextTheme(
-          bodyText1: TextStyle(color: Colors.black54),
+    return BlocProvider(
+      create: (context) => MainAppBloc(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark().copyWith(
+          textTheme: TextTheme(
+            bodyText1: TextStyle(color: Colors.black54),
+          ),
+          hintColor: Colors.grey,
         ),
-        hintColor: Colors.grey,
+        initialRoute: LoginScreen.id,
+        routes: {
+          WelcomeScreen.id: (context) => WelcomeScreen(),
+          LoginScreen.id: (context) => LoginScreen(),
+          RegistrationScreen.id: (context) => RegistrationScreen(),
+          MainScreen.id: (context) => MainScreen(),
+          CreateGroup.id: (context) => CreateGroup(),
+          RoutesWidget.id: (context) => RoutesWidget(),
+          Invite.id: (context) => Invite(),
+          ActiveGroup.id: (context) => ActiveGroup(),
+          EmergencyContact.id: (context) => EmergencyContact(),
+          SettingsPage.id: (context) => SettingsPage(),
+          AddContact.id: (context) => AddContact(),
+          Moving.id: (context) => Moving(),
+          MovingActive.id: (context) => MovingActive(),
+          CreatePin.id: (context) => CreatePin(),
+          RepeatPin.id: (context) => RepeatPin(),
+          LeaveGroup.id: (context) => LeaveGroup(),
+          SafeWord.id: (context) => SafeWord(),
+          FinalCreate.id: (context) => FinalCreate(),
+          EditPin.id: (context) => EditPin(),
+        },
+        //TODO: If user is already logged in on device, they should be redirected to the main_screen page
+        // home: LoginScreen(),
       ),
-      initialRoute: MainScreen.id,
-      routes: {
-        WelcomeScreen.id: (context) => WelcomeScreen(),
-        LoginScreen.id: (context) => LoginScreen(),
-        RegistrationScreen.id: (context) => RegistrationScreen(),
-        MainScreen.id: (context) => MainScreen(),
-        CreateGroup.id: (context) => CreateGroup(),
-        RoutesWidget.id: (context) => RoutesWidget(),
-        Invite.id: (context) => Invite(),
-        ActiveGroup.id: (context) => ActiveGroup(),
-        EmergencyContact.id: (context) => EmergencyContact(),
-        SettingsPage.id: (context) => SettingsPage(),
-        AddContact.id: (context) => AddContact(),
-        Moving.id: (context) => Moving(),
-        MovingActive.id: (context) => MovingActive(),
-        CreatePin.id: (context) => CreatePin(),
-        RepeatPin.id: (context) => RepeatPin(),
-        LeaveGroup.id: (context) => LeaveGroup(),
-        SafeWord.id: (context) => SafeWord(),
-        FinalCreate.id: (context) => FinalCreate(),
-        EditPin.id: (context) => EditPin(),
-      },
-      //TODO: If user is already logged in on device, they should be redirected to the main_screen page
-      // home: LoginScreen(),
-   
     );
   }
 }

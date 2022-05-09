@@ -7,7 +7,7 @@ LatLng userLocation;
 double userLatitude;
 final _firestore = FirebaseFirestore.instance;
 Map userDets;
-List<DocumentSnapshot> selected;
+List<DocumentSnapshot> selected =[];
 
 class getDetails {
   final _auth = FirebaseAuth.instance;

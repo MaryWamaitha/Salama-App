@@ -29,17 +29,17 @@ class SignUpProgress extends MainAppState {}
 
 class SignUpSuccess extends MainAppState {}
 
-// class LoginFailure extends MainAppState {
-//   final String errorCode;
-//   final String errorDescription;
+class LoginFailure extends MainAppState {
+  final String errorCode;
+  final String errorDescription;
 
-//   const LoginFailure({required this.errorCode, required this.errorDescription});
+  const LoginFailure({ this.errorCode,  this.errorDescription});
 
-//   @override
-//   List<Object> get props => [errorCode, errorDescription];
+  @override
+  List<Object> get props => [errorCode, errorDescription];
 
-//   @override
-//   String toString() =>
-//       'MainAppStateFailure: errorCode: $errorCode, errorDescription: $errorDescription';
-// }
+  @override
+  String toString() =>
+      'MainAppStateFailure: errorCode: $errorCode, errorDescription: $errorDescription';
+}
 
