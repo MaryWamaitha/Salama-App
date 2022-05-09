@@ -26,7 +26,6 @@ String leaveGroup = '                         ';
 User loggedInUser;
 int minApprovals;
 int safeTaps;
-bool tapped = false;
 List<String> tokenIDList = [];
 List<String> memberTokens = [];
 
@@ -78,8 +77,8 @@ class _ActiveGroupState extends State<ActiveGroup> {
   double groupLatitude;
   double groupLongitude;
   String status;
-  bool tracking = false;
-  double Distance;
+  bool tracking ;
+  double Distance = 0;
   String activeID;
   bool isSafe;
   bool sent = false;
@@ -202,6 +201,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
         String tokenId = Notifystatus.userId;
         print('the user active is $record');
         getGroupDetails();
+        activateTimer();
       }
     } catch (e) {
       print(e);
@@ -229,7 +229,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
               LatLng(x['location'].latitude, x['location'].longitude);
       }
       return userLocation;
-
   }
 
   //getting group details which are displayed on the page
@@ -245,14 +244,18 @@ class _ActiveGroupState extends State<ActiveGroup> {
         setState(() {
           // assigning the groupName and other variables to the values from the database
           groupName = details['Name'];
-          place = details['Destination'];
-          Distance = details['Distance'] * 1000;
-          groupLatitude = details['Location'].latitude;
-          groupLongitude = details['Location'].longitude;
-          destination = LatLng(
-              details['Location'].latitude, details['Location'].longitude);
           print('the group is $details');
+          place = details['Destination'];
+          Distance = details['Distance'];
+          print('Distance is $Distance');
+          destination = LatLng(
+              details['Location'].latitude,
+              details['Location'].longitude);
+          groupLatitude = destination.latitude;
+          groupLongitude = destination.longitude;
+          print('group Lat is $destination');
         });
+
       }
     });
   }
@@ -295,20 +298,23 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //or false. true means you are now at location and tracking can begin. False means that you are not
   //yet at location and tracking cannot begin
   void activateTimer() {
+    print('activating is working and traking is $tracking');
+    if(tracking == false) {
       Timer.periodic(Duration(minutes: 2), (timer) async {
         calculateDistance calcDist = calculateDistance();
         var userCoord = await getUserLocation();
         userLatitude = userCoord.latitude;
-        userLongitude=userCoord.longitude;
+        userLongitude = userCoord.longitude;
         bool active;
         var p = 0.017453292519943295;
         //method for calculating distance between two points
         var a = 0.5 -
             cos((groupLatitude - userLatitude) * p) / 2 +
-            cos(userLatitude * p) * cos(groupLatitude * p) * (1 - cos((groupLongitude - userLongitude) * p)) / 2;
+            cos(userLatitude * p) * cos(groupLatitude * p) *
+                (1 - cos((groupLongitude - userLongitude) * p)) / 2;
         double distance = 12742 * asin(sqrt(a));
         distance = distance * 1000;
-        if (distance > 1000) {
+        if (distance > 500) {
           active = false;
         } else {
           active = true;
@@ -326,15 +332,20 @@ class _ActiveGroupState extends State<ActiveGroup> {
           trackingTimer();
         }
       });
+    } else {
+      trackingTimer();
+    }
   }
 
   //function that runs every 60 seconds and checks if you are still at location
   void trackingTimer() {
+    print('tracking is true');
     Timer.periodic(Duration(seconds: 60), (timer) async {
-      calculateDistance calcDist = calculateDistance();
+      print('timer cameon');
       LatLng userCoord = await getUserLocation();
       userLatitude = userCoord.latitude;
       userLongitude=userCoord.longitude;
+      print ('coordinates are $userCoord');
       bool active;
       var p = 0.017453292519943295;
       //method for calculating distance between two points
@@ -342,14 +353,15 @@ class _ActiveGroupState extends State<ActiveGroup> {
           cos((groupLatitude - userLatitude) * p) / 2 +
           cos(userLatitude * p) * cos(groupLatitude * p) * (1 - cos((groupLongitude - userLongitude) * p)) / 2;
       double distance = 12742 * asin(sqrt(a));
-      distance = distance * 1000;
-      if (distance > 1000) {
+      double dist = distance * 1000;
+      print('distance is $dist');
+      if (dist > Distance) {
         active = false;
       } else {
         active = true;
       }
       //if the user is not safe is now true, updating the isSafe value in DB
-      print('the user safety is $active and the distance is $distance');
+      print('the user safety is $active and the distance is $distance and the set distane is $Distance');
       if (active == false) {
         await _firestore.collection("active_members").doc(activeID).update({
           'isSafe': false,
@@ -379,7 +391,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
     configOneSignel();
     Indicator();
     getUserDetails();
-    activateTimer();
+    getGroupDetails();
     Workmanager().initialize(
       callbackDispatcher,
       isInDebugMode: true,
@@ -402,7 +414,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
             automaticallyImplyLeading: false,
             title: Center(
               child: Padding(
-                padding: EdgeInsets.only(top: 50.0, bottom: 10),
+                padding: EdgeInsets.only(top: 50.0, bottom: 20),
                 child: Text(
                   'ACTIVE GROUP',
                   style: TextStyle(
@@ -423,10 +435,23 @@ class _ActiveGroupState extends State<ActiveGroup> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child:
-                  Text('Group: $groupName', style: kMajorHeadings),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child:
+                      Text('Group: $groupName', style: kMajorHeadings),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.location_pin,),
+                        Text('$place', style: TextStyle(
+                          fontSize: 14,
+                        )),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               MembersStream(),
@@ -503,7 +528,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
       )
       //if the user is not active in any group, they are informed that they are not in any group
           : Padding(
-        padding: EdgeInsets.only(top: 120),
+        padding: EdgeInsets.only(top: 40),
         child: Container(
           color: kBackgroundColour,
           child: Column(
@@ -517,6 +542,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Image.asset('images/create.png'),
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 15.0),
@@ -548,7 +574,7 @@ class _ActiveGroupState extends State<ActiveGroup> {
                                 child: Text(
                                   'Create a group',
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: kMainColour,
                                   ),
                                 ),
                               ),
@@ -613,6 +639,7 @@ class MembersStream extends StatelessWidget {
             var token = x['tokenID'];
             tokenIDList.add(token);
           }
+          bool tapped = false;
 
           //pass the values from the previous step to the MemberStatus widget
           final memberStatus = MemberStatus(
@@ -621,6 +648,7 @@ class MembersStream extends StatelessWidget {
             isMe: username == memberUname,
             memberID: memberID,
             getDetails: getMemberDetails,
+            tapped: tapped,
           );
 
           //add the MemmberStatus widget to a list made up of memberStatus widgets
@@ -636,16 +664,18 @@ class MembersStream extends StatelessWidget {
     );
   }
 }
-
+//ignore: must_be_immutable
 class MemberStatus extends StatelessWidget {
   MemberStatus(
-      {this.member, this.isSafe, this.isMe, this.memberID, this.getDetails});
+      {this.member, this.isSafe, this.isMe, this.memberID,
+        this.tapped, this.getDetails});
 
   final String memberID;
   final String member;
   final bool isSafe;
   final bool isMe;
   final void getDetails;
+  bool tapped;
 
   @override
   Widget build(BuildContext context) {

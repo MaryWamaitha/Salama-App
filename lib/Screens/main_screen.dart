@@ -161,7 +161,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
     );
-
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position position) async {
@@ -179,8 +178,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       );
-
-
 
       // final bitmapDescriptor = await mark.createBitmapDescriptorFromIconData(
       //     Icons.import_contacts, Colors.amber, Colors.white, Colors.black);

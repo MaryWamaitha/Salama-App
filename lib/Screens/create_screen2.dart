@@ -44,8 +44,8 @@ class _FinalCreateState extends State<FinalCreate> {
   String safeWord = 'Not set';
   List<String> Users = [];
   List<Map> Members = [];
-  List<double> Distance = [300, 500, 700, 900, 1000, 1200, 1500, 2000, 2500];
-  double distance = 1000;
+  List<double> Distance = [50, 100, 200, 250, 300, 400, 500, 700, 1000];
+  double distance = 100;
   String DistanceInfo = 'Select distance below';
   String SafeWordDetails = 'Tap the down arrow key to learn more';
   bool safety = true;
@@ -413,7 +413,7 @@ class _FinalCreateState extends State<FinalCreate> {
                                       title: Text('Tracking Distance'),
                                       content: Text(
                                         'This is how far group members can move without triggering an alert. Once users go beyond this distance from the location, an alert is sent to all group members.\nYou can either select a distance from the drop down or '
-                                        'else the system distance of 1000 m will be used.\n The distance is in metres',
+                                        'else the system distance of 100 m will be used.\n The distance is in metres',
                                         textAlign: TextAlign.left,
                                       ),
                                       actions: [
