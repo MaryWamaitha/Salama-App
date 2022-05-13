@@ -244,10 +244,8 @@ class _ActiveGroupState extends State<ActiveGroup> {
         setState(() {
           // assigning the groupName and other variables to the values from the database
           groupName = details['Name'];
-          print('the group is $details');
           place = details['Destination'];
           Distance = details['Distance'];
-          print('Distance is $Distance');
           destination = LatLng(
               details['Location'].latitude,
               details['Location'].longitude);
@@ -298,7 +296,6 @@ class _ActiveGroupState extends State<ActiveGroup> {
   //or false. true means you are now at location and tracking can begin. False means that you are not
   //yet at location and tracking cannot begin
   void activateTimer() {
-    print('activating is working and traking is $tracking');
     if(tracking == false) {
       Timer.periodic(Duration(minutes: 2), (timer) async {
         calculateDistance calcDist = calculateDistance();

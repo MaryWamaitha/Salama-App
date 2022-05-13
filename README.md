@@ -1,16 +1,6 @@
-# salama
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Salama is a GPS Based Application that allows you to create
+safety networks when you go out with your friends and tracks
+all group members to make sure they are safe.
+To install the application, clone thi code locally and run it on
+your machine (make sure you run pub get to get the packages).
+After that, build the application APK, download it and open it on Android phone.
