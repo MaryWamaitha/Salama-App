@@ -171,239 +171,256 @@ class _CreateGroupState extends State<CreateGroup> {
               inAsyncCall: indicator,
               child: SingleChildScrollView(
                 child: SafeArea(
-                  child: Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(height: 10.0),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 16.0, top: 15),
-                                child: Text(
-                                  'Group Name',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: 10.0),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 16.0, top: 15),
+                              child: Text(
+                                'Group Name',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 5.0),
-                                child: Center(
-                                  child: SizedBox(
-                                    width: 350,
-                                    height: 100,
-                                    child: TextField(
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(color: Colors.black),
-                                      onChanged: (value) {
-                                        groupName = value;
-                                      },
-                                      decoration: InputDecoration(
-                                        hintText: '$groupName',
-                                        fillColor: Colors.white,
-                                        filled: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                            vertical: 8.0, horizontal: 10.0),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(32.0)),
-                                          borderSide: BorderSide(
-                                              color: Colors.amberAccent,
-                                              width: 2.0),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10.0)),
-                                          borderSide: BorderSide(
-                                              color: Colors.amberAccent),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 5.0),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 350,
+                                  height: 100,
+                                  child: TextField(
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.black),
+                                    onChanged: (value) {
+                                      groupName = value;
+                                    },
+                                    decoration: InputDecoration(
+                                      hintText: '$groupName',
+                                      fillColor: Colors.white,
+                                      filled: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          vertical: 8.0, horizontal: 10.0),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(32.0)),
+                                        borderSide: BorderSide(
                                             color: Colors.amberAccent,
-                                          ),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(10.0)),
+                                            width: 2.0),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10.0)),
+                                        borderSide: BorderSide(
+                                            color: Colors.amberAccent),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Colors.amberAccent,
                                         ),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10.0)),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Text(
-                                  'Search for users',
-                                  style: TextStyle(
-                                    fontSize: 16.0,
-                                    fontWeight: FontWeight.w700,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: Text(
+                                'Search for users',
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 16.0, top: 5, right: 14),
+                              child: Center(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      borderRadius: new BorderRadius.all(
+                                        const Radius.circular(10.0),
+                                      ),
+                                      border: Border.all(
+                                        color: Colors.amberAccent,
+                                      ),
+                                      color: Colors.white70),
+                                  child: Autocomplete<String>(
+                                    optionsBuilder: (TextEditingValue value) {
+                                      // When the field is empty
+                                      if (value.text.isEmpty) {
+                                        return [];
+                                      }
+                                      // The logic to find out which ones should appear
+                                      return Users.where((suggestion) =>
+                                          suggestion.toLowerCase().contains(
+                                              value.text.toLowerCase()));
+                                    },
+                                    onSelected: (value) async {
+                                      //TODO: Send request for user to join group
+                                      final QuerySnapshot activity =
+                                          await _firestore
+                                              .collection('users')
+                                              .where('username',
+                                                  isEqualTo: value)
+                                              .get();
+                                      final List<DocumentSnapshot> available =
+                                          activity.docs;
+                                      var result = available[0].data() as Map;
+                                      var details = new Map<String, String>();
+                                      var status = result['status'];
+                                      var tokenID = result['tokenID'];
+                                      if (status == 'active') {
+                                        showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text(
+                                                ' User cannot be added to group'),
+                                            content: Text(
+                                                'The user is currently active in another group'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(ctx).pop();
+                                                },
+                                                child: Text('Okay'),
+                                              )
+                                            ],
+                                          ),
+                                        );
+                                      } else {
+                                        setState(() {
+                                          // print(available);
+                                          details['username'] = value;
+                                          details['tokenID'] = tokenID;
+                                          Members.add(details);
+                                          Users.remove(value);
+                                        });
+                                      }
+                                    },
                                   ),
-                                  textAlign: TextAlign.left,
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 16.0, top: 5, right: 14),
-                                child: Center(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        borderRadius: new BorderRadius.all(
-                                          const Radius.circular(10.0),
-                                        ),
-                                        border: Border.all(
-                                          color: Colors.amberAccent,
-                                        ),
-                                        color: Colors.white70),
-                                    child: Autocomplete<String>(
-                                      optionsBuilder: (TextEditingValue value) {
-                                        // When the field is empty
-                                        if (value.text.isEmpty) {
-                                          return [];
-                                        }
-                                        // The logic to find out which ones should appear
-                                        return Users.where((suggestion) =>
-                                            suggestion.toLowerCase().contains(
-                                                value.text.toLowerCase()));
-                                      },
-                                      onSelected: (value) async {
-                                        //TODO: Send request for user to join group
-                                        final QuerySnapshot activity =
-                                            await _firestore
-                                                .collection('users')
-                                                .where('username',
-                                                    isEqualTo: value)
-                                                .get();
-                                        final List<DocumentSnapshot> available =
-                                            activity.docs;
-                                        var result = available[0].data() as Map;
-                                        var details = new Map<String, String>();
-                                        var status = result['status'];
-                                        var tokenID = result['tokenID'];
-                                        if (status == 'active') {
-                                          showDialog(
-                                            context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              title: Text(
-                                                  ' User cannot be added to group'),
-                                              content: Text(
-                                                  'The user is currently active in another group'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(ctx).pop();
-                                                  },
-                                                  child: Text('Okay'),
-                                                )
-                                              ],
-                                            ),
-                                          );
-                                        } else {
-                                          setState(() {
-                                            // print(available);
-                                            details['username'] = value;
-                                            details['tokenID'] = tokenID;
-                                            Members.add(details);
-                                            Users.remove(value);
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 20.0),
-                              SizedBox(height: 10.0),
-                              for (var user in Members)
-                                Members != null
-                                    ? Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 15.0, right: 11, top: 10),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Padding(
+                            ),
+                            SizedBox(height: 20.0),
+                            SizedBox(height: 10.0),
+                            for (var user in Members)
+                              Members != null
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 15.0, right: 11, top: 10),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 10.0),
+                                            child: Padding(
                                               padding: const EdgeInsets.only(
-                                                  bottom: 10.0),
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 8.0, right: 20),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        CircleAvatar(
-                                                          backgroundImage:
-                                                              AssetImage(
-                                                                  'images/person.png'),
-                                                          radius: 25,
-                                                        ),
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .only(
-                                                                  left: 8.0),
-                                                          child: Text(
-                                                            user['username'],
-                                                            style: TextStyle(
-                                                              fontSize: 14.0,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
+                                                  left: 8.0, right: 20),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      CircleAvatar(
+                                                        backgroundImage:
+                                                            AssetImage(
+                                                                'images/person.png'),
+                                                        radius: 25,
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                    .only(
+                                                                left: 8.0),
+                                                        child: Text(
+                                                          user['username'],
+                                                          style: TextStyle(
+                                                            fontSize: 14.0,
+                                                            color:
+                                                                Colors.white,
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                    IconButton(
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          Members.remove(user);
-                                                          addition.addMembers(
-                                                              user['username']
-                                                                  .toString());
-                                                        });
-                                                      },
-                                                      icon: Icon(
-                                                        Icons.cancel_rounded,
-                                                        color:
-                                                            Colors.amberAccent,
                                                       ),
+                                                    ],
+                                                  ),
+                                                  IconButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        Members.remove(user);
+                                                        addition.addMembers(
+                                                            user['username']
+                                                                .toString());
+                                                      });
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.cancel_rounded,
+                                                      color:
+                                                          Colors.amberAccent,
                                                     ),
-                                                  ],
-                                                ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      )
-                                    // SizedBox(height: 15.0),
-                                    : Text(
-                                        ' There are no members in the group'),
-                            ],
-                          ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  // SizedBox(height: 15.0),
+                                  : Text(
+                                      ' There are no members in the group'),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                          child: Center(
-                            child: TextButton(
-                              onPressed: () {
-                                //when button is clicked check if the user has group members
-                                if (Members.length == 0) {
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                        child: Center(
+                          child: TextButton(
+                            onPressed: () {
+                              //when button is clicked check if the user has group members
+                              if (Members.length == 0) {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: Text(' Add Members'),
+                                    content: Text(
+                                        'Hello, you need to add at least one group member to the group.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(ctx).pop();
+                                        },
+                                        child: Text('Okay'),
+                                      )
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                if (groupName == null || groupName == '') {
                                   showDialog(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      title: Text(' Add Members'),
-                                      content: Text(
-                                          'Hello, you need to add at least one group member to the group.'),
+                                      title: Text(' Group Name'),
+                                      content:
+                                          Text('Please enter a group name'),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
@@ -415,58 +432,39 @@ class _CreateGroupState extends State<CreateGroup> {
                                     ),
                                   );
                                 } else {
-                                  if (groupName == null || groupName == '') {
-                                    showDialog(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: Text(' Group Name'),
-                                        content:
-                                            Text('Please enter a group name'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(ctx).pop();
-                                            },
-                                            child: Text('Okay'),
-                                          )
-                                        ],
-                                      ),
-                                    );
-                                  } else {
-                                    Navigator.pushNamed(context, FinalCreate.id,
-                                        arguments: {
-                                          "invites": Members,
-                                          "groupName": groupName,
-                                        });
-                                  }
+                                  Navigator.pushNamed(context, FinalCreate.id,
+                                      arguments: {
+                                        "invites": Members,
+                                        "groupName": groupName,
+                                      });
                                 }
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: Colors.amberAccent,
-                                    borderRadius: new BorderRadius.all(
-                                      const Radius.circular(30.0),
-                                    )),
-                                height: 50,
-                                width: 250.00,
-                                child: Center(
-                                  child: Text(
-                                    'Continue',
-                                    style: TextStyle(
-                                      color: kMainColour,
-                                    ),
+                              }
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.amberAccent,
+                                  borderRadius: new BorderRadius.all(
+                                    const Radius.circular(30.0),
+                                  )),
+                              height: 50,
+                              width: 250.00,
+                              child: Center(
+                                child: Text(
+                                  'Continue',
+                                  style: TextStyle(
+                                    color: kMainColour,
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: 230,
-                        ),
-                        Menu(),
-                      ],
-                    ),
+                      ),
+                      SizedBox(
+                        height: 230,
+                      ),
+                      Menu(),
+                    ],
                   ),
                 ),
               ),

@@ -200,6 +200,7 @@ class _LeaveGroupState extends State<LeaveGroup> {
               child: Container(
                   color: kBackgroundColour,
                   child: Column(
+
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Center(
